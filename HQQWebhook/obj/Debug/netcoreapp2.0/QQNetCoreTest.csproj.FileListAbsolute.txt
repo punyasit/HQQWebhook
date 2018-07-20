@@ -1,0 +1,11 @@
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\bin\Debug\netcoreapp2.0\QQNetCoreTest.deps.json
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\bin\Debug\netcoreapp2.0\QQNetCoreTest.runtimeconfig.json
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\bin\Debug\netcoreapp2.0\QQNetCoreTest.runtimeconfig.dev.json
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\bin\Debug\netcoreapp2.0\QQNetCoreTest.dll
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\bin\Debug\netcoreapp2.0\QQNetCoreTest.pdb
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQNetCoreTest.csprojAssemblyReference.cache
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQNetCoreTest.csproj.CoreCompileInputs.cache
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQNetCoreTest.AssemblyInfoInputs.cache
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQNetCoreTest.AssemblyInfo.cs
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQNetCoreTest.dll
+D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQNetCoreTest.pdb
