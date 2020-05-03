@@ -95,41 +95,81 @@ namespace HQQWebhook.Controllers
                     var pageId = pageEntry.id.Value;
                     var timeOfEvent = pageEntry.id.Value;
 
-                    foreach (var messagingEvent in pageEntry.messaging)
+                    if (pageEntry.messaging != null)
                     {
-                        if (messagingEvent.optin != null)
+                        foreach (var messagingEvent in pageEntry.messaging)
                         {
-                            receivedAuthentication(messagingEvent);
+                            if (messagingEvent.optin != null)
+                            {
+                                receivedAuthentication(messagingEvent);
+                            }
+                            else if (messagingEvent.message != null)
+                            {
+                                receivedMessage(messagingEvent);
+                            }
+                            else if (messagingEvent.deliver != null)
+                            {
+                                receivedDeliveryConfirmation(messagingEvent);
+                            }
+                            else if (messagingEvent.postback != null)
+                            {
+                                receivedPostback(messagingEvent);
+                            }
+                            else if (messagingEvent.read != null)
+                            {
+                                receivedMessageRead(messagingEvent);
+                            }
+                            else if (messagingEvent.account_linking != null)
+                            {
+                                receivedAccountLink(messagingEvent);
+                            }
+                            else
+                            {
+                                Console.Write(string.Format("Webhook received unknown messagingEvent: {0} ", messagingEvent));
+                            }
                         }
-                        else if (messagingEvent.message != null)
-                        {
-                            receivedMessage(messagingEvent);
-                        }
-                        else if (messagingEvent.deliver != null)
-                        {
-                            receivedDeliveryConfirmation(messagingEvent);
-                        }
-                        else if (messagingEvent.postback != null)
-                        {
-                            receivedPostback(messagingEvent);
-                        }
-                        else if (messagingEvent.read != null)
-                        {
-                            receivedMessageRead(messagingEvent);
-                        }
-                        else if (messagingEvent.account_linking != null)
-                        {
-                            receivedAccountLink(messagingEvent);
-                        }
-                        else
-                        {
-                            Console.Write(string.Format("Webhook received unknown messagingEvent: {0} ", messagingEvent));
+                    }
+                    else
+                    {
+                        if (pageEntry != null) {
+                            dynamic dmPageEntry = (dynamic)pageEntry;
+                            if (dmPageEntry.changes != null)
+                            {
+                                if (dmPageEntry.changes[0].field != null && dmPageEntry.changes[0].field == "feed")
+                                {
+                                    recievedFeedAction(dmPageEntry.changes[0].value);
+                                }
+                            }
                         }
                     }
                 }
+
             }
 
             HttpContext.Response.StatusCode = 200;
+        }
+
+        private void recievedFeedAction(dynamic feedResponse)
+        {
+            FeedResponse feedResp = new FeedResponse();
+
+            feedResp.PostID = feedResponse.post_id;
+            feedResp.Message = feedResponse.message;
+            feedResp.FromId = feedResponse.from.id;
+            feedResp.FromName = feedResponse.from.name;
+
+            if(feedResp.Message == "Example post content.")
+            {
+                sendTextMessage(feedResp.FromId, "Example Response to Chat");
+            }
+        }
+
+        public class FeedResponse
+        {
+            public string PostID { get; set; }
+            public string Message { get; set; }
+            public string FromId { get; set; }
+            public string FromName { get; set; }
         }
 
         public void verifyRequestSignature()
@@ -440,7 +480,6 @@ namespace HQQWebhook.Controllers
 
         private void callSendAPI(dynamic messageData)
         {
-
             HttpResponseMessage response = (new HttpClient().PostAsJsonAsync(
                 FB_MESSAGE_API + "?access_token=" + PAGE_ACCESS_TOKEN
                 , (object)messageData)).Result;
