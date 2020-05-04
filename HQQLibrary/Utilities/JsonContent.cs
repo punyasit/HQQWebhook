@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace HQQWebhook.Manager
+namespace HQQLibrary.Utilities
 {
     public class JsonContent : StringContent
     {

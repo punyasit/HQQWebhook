@@ -1,3 +1,7 @@
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.csprojAssemblyReference.cache
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.csproj.CoreCompileInputs.cache
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.AssemblyInfoInputs.cache
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.AssemblyInfo.cs
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\appsettings.Development.json
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\appsettings.json
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\Properties\launchSettings.json
@@ -6,10 +10,12 @@ Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\n
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\HQQWebhook.runtimeconfig.dev.json
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\HQQWebhook.dll
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\HQQWebhook.pdb
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.csprojAssemblyReference.cache
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.csproj.CoreCompileInputs.cache
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.AssemblyInfoInputs.cache
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.AssemblyInfo.cs
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\HQQLibrary.dll
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\bin\Debug\netcoreapp2.2\HQQLibrary.pdb
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.csproj.CopyComplete
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.dll
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.pdb
 Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.genruntimeconfig.cache
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.RazorAssemblyInfo.cache
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.RazorAssemblyInfo.cs
+Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQWebhook\obj\Debug\netcoreapp2.2\HQQWebhook.RazorTargetAssemblyInfo.cache

@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 
-using HQQWebhook.Manager;
 using System.Net.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -17,6 +16,8 @@ using System.Text;
 using Microsoft.AspNetCore.Http.Internal;
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
+using HQQWebhook.Model;
+using HQQWebhook.Manager;
 
 namespace HQQWebhook.Controllers
 {
@@ -31,26 +32,19 @@ namespace HQQWebhook.Controllers
     public class WebHookController : Controller
     {
         private readonly IConfiguration WebConfig;
-
-        private string APP_SECRET = string.Empty;
-        private string VALIDATION_TOKEN = string.Empty;
-        private string PAGE_ACCESS_TOKEN = string.Empty;
-        private string SERVER_URL = string.Empty;
-        private string FB_MESSAGE_API = string.Empty;
+        private FacebookAPIManager fbAPIMgr;
+        private FbWebhookConfig fbConfig = new FbWebhookConfig();
+        private List<string> lstFeed2Chat = new List<string>();
+        private List<string> lstFeed2ChatResp = new List<string>();
 
         public WebHookController(IConfiguration configuration)
         {
             WebConfig = configuration;
-            InitVariable();
-        }
+            fbConfig = configuration.GetSection("FbWebhookConfig").Get<FbWebhookConfig>();
+            lstFeed2Chat = configuration.GetSection("FeedResponse:Feed2Chat").Get<List<string>>(); 
+            lstFeed2ChatResp = configuration.GetSection("FeedResponse:Feed2ChatResp").Get<List<string>>();
 
-        private void InitVariable()
-        {
-            APP_SECRET = WebConfig["appSecret"];
-            VALIDATION_TOKEN = WebConfig["validationToken"];
-            PAGE_ACCESS_TOKEN = WebConfig["pageAccessToken"];
-            SERVER_URL = WebConfig["serverURL"];
-            FB_MESSAGE_API = WebConfig["facebookMessageApi"];
+            fbAPIMgr = new FacebookAPIManager(fbConfig);
         }
 
         /*
@@ -63,7 +57,7 @@ namespace HQQWebhook.Controllers
         public int Get()
         {
             if (Request.Query["hub.mode"] == "subscribe" &&
-                Request.Query["hub.verify_token"] == WebConfig["validationToken"])
+                Request.Query["hub.verify_token"] == fbConfig.ValidationToken)
             {
                 Response.StatusCode = 200;
                 return int.Parse(Request.Query["hub.challenge"]);
@@ -71,7 +65,7 @@ namespace HQQWebhook.Controllers
             else
             {
                 Response.StatusCode = 403;
-                return 0;
+                return 1;
             }
         }
 
@@ -88,14 +82,14 @@ namespace HQQWebhook.Controllers
         {
             // dynamic dataContent = content; JObject
 
-            if (dataContent["object"].Value == "page")
+            if (dataContent["object"].Value == "page" )
             {
                 foreach (var pageEntry in dataContent.entry)
                 {
                     var pageId = pageEntry.id.Value;
                     var timeOfEvent = pageEntry.id.Value;
 
-                    if (pageEntry.messaging != null)
+                    if (pageEntry.messaging != null && fbConfig.EnabledAutoMessage)
                     {
                         foreach (var messagingEvent in pageEntry.messaging)
                         {
@@ -131,11 +125,12 @@ namespace HQQWebhook.Controllers
                     }
                     else
                     {
-                        if (pageEntry != null) {
+                        if (pageEntry != null && fbConfig.EnabledFeedResponse) {
                             dynamic dmPageEntry = (dynamic)pageEntry;
                             if (dmPageEntry.changes != null)
                             {
-                                if (dmPageEntry.changes[0].field != null && dmPageEntry.changes[0].field == "feed")
+                                if (dmPageEntry.changes[0].field != null 
+                                    && dmPageEntry.changes[0].field == "feed")
                                 {
                                     recievedFeedAction(dmPageEntry.changes[0].value);
                                 }
@@ -151,25 +146,34 @@ namespace HQQWebhook.Controllers
 
         private void recievedFeedAction(dynamic feedResponse)
         {
-            FeedResponse feedResp = new FeedResponse();
-
-            feedResp.PostID = feedResponse.post_id;
-            feedResp.Message = feedResponse.message;
-            feedResp.FromId = feedResponse.from.id;
-            feedResp.FromName = feedResponse.from.name;
-
-            if(feedResp.Message == "Example post content.")
+            if (feedResponse.verb == "add")
             {
-                sendTextMessage(feedResp.FromId, "Example Response to Chat");
-            }
-        }
+                string strUserId;
+                FbFeedResponse feedResp = new FbFeedResponse();
+                
+                feedResp.PostID = feedResponse.post_id;
+                feedResp.CommentID = feedResponse.comment_id;
+                feedResp.Message = feedResponse.message;
+                feedResp.FromName = feedResponse.from.name;
 
-        public class FeedResponse
-        {
-            public string PostID { get; set; }
-            public string Message { get; set; }
-            public string FromId { get; set; }
-            public string FromName { get; set; }
+                strUserId = feedResponse.from.id;
+
+                //# Validate existing sender Id from Database.
+                //# If not exist, call reciepient id from API
+                try
+                {
+                    feedResp.RecipientId = fbAPIMgr.GetSPID(strUserId);
+                    if (!string.IsNullOrEmpty(feedResp.RecipientId) && lstFeed2Chat.Contains(feedResp.Message))
+                    {
+                        sendTextMessageCommentReply(feedResp, lstFeed2ChatResp[0]);
+                    }
+                }
+                catch (Exception){
+
+                }
+
+              
+            }
         }
 
         public void verifyRequestSignature()
@@ -235,7 +239,17 @@ namespace HQQWebhook.Controllers
 
             // You may get a text or attachment but not both
             string messageText = message.text;
-            string messageAttachments = message.attachments;
+            string messageAttachments = string.Empty;
+
+            // Try to get attachment.
+            try
+            {
+                 messageAttachments = message.attachments;
+            }
+            catch (Exception){
+                
+            }
+           
             var quickReply = message.quick_reply;
 
             if (!string.IsNullOrEmpty(isEcho))
@@ -264,8 +278,8 @@ namespace HQQWebhook.Controllers
                 Regex rgx = new Regex(@"/[^\w\s] / gi");
                 switch (rgx.Replace(messageText, "").Trim().ToLower())
                 {
-                    case "hello":
-                    case "hi":
+                    case "hq:hello":
+                    case "hq:hi":
                         sendHiMessage(senderID);
                         break;
 
@@ -289,11 +303,11 @@ namespace HQQWebhook.Controllers
                     //    requiresServerURL(sendFileMessage, [senderID]);
                     //    break;
 
-                    case "ขอรายละเอียดเพิ่มเติม":
-                    case "button":
-                        sendTypingOn(senderID);
-                        sendButtonMessage(senderID);
-                        break;
+                    //case "ขอรายละเอียดเพิ่มเติม":
+                    //case "button":
+                    //    sendTypingOn(senderID);
+                    //    sendButtonMessage(senderID);
+                    //    break;
 
                     //case "generic":
                     //    requiresServerURL(sendGenericMessage, [senderID]);
@@ -312,11 +326,11 @@ namespace HQQWebhook.Controllers
                     //    sendReadReceipt(senderID);
                     //    break;
 
-                    case "typing on":
+                    case "hq:typing on":
                         sendTypingOn(senderID);
                         break;
 
-                    case "typing off":
+                    case "hq:typing off":
                         sendTypingOff(senderID);
                         break;
 
@@ -324,9 +338,9 @@ namespace HQQWebhook.Controllers
                     //    requiresServerURL(sendAccountLinking, [senderID]);
                     //    break;
 
-                    default:
-                        sendTextMessage(senderID, messageText);
-                        break;
+                    //default:
+                    //    sendTextMessage(senderID, messageText);
+                    //    break;
 
                 }
             }
@@ -353,12 +367,12 @@ namespace HQQWebhook.Controllers
                     payload =
                     new
                     {
-                        url = SERVER_URL + "/assets/rift.png"
+                        url = fbConfig.ServerURL + "/assets/rift.png"
                     }
                 }
                 }
             };
-            callSendAPI(messageData);
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void sendTypingOff(dynamic recipientId)
@@ -371,7 +385,7 @@ namespace HQQWebhook.Controllers
                 },
                 sender_action = "typing_off"
             };
-            callSendAPI(messageData);
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void sendTypingOn(dynamic recipientId)
@@ -385,7 +399,7 @@ namespace HQQWebhook.Controllers
                 sender_action = "typing_on"
             };
 
-            callSendAPI(messageData);
+            fbAPIMgr.CallSendAPI(messageData);
 
         }
 
@@ -416,7 +430,7 @@ namespace HQQWebhook.Controllers
                 }
             };
 
-            callSendAPI(messageData);
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void sendHiMessage(dynamic recipientId)
@@ -434,7 +448,7 @@ namespace HQQWebhook.Controllers
                 }
             };
 
-            callSendAPI(messageData);
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void receivedAuthentication(dynamic messagingEvent)
@@ -459,7 +473,6 @@ namespace HQQWebhook.Controllers
             sendTextMessage(senderID, "Authentication successful");
         }
 
-
         private void sendTextMessage(dynamic recipientId, string messageText)
         {
             var messageData = new
@@ -475,22 +488,30 @@ namespace HQQWebhook.Controllers
                 }
             };
 
-            callSendAPI(messageData);
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
-        private void callSendAPI(dynamic messageData)
+        private void sendTextMessageCommentReply(
+            FbFeedResponse fResp, 
+            string messageText)
         {
-            HttpResponseMessage response = (new HttpClient().PostAsJsonAsync(
-                FB_MESSAGE_API + "?access_token=" + PAGE_ACCESS_TOKEN
-                , (object)messageData)).Result;
-
-            if (response != null)
+            var messageData = new
             {
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                recipient = new
                 {
-                    // #LOG : Error log
+                    //id = fResp.RecipientId,
+                    comment_id = fResp.CommentID
+                    //,post_id = fResp.PostID
+                },
+
+                message = new
+                {
+                    text = messageText,
+                    metadata = "DEVELOPER_DEFINED_METADATA"
                 }
-            }
+            };
+
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void receivedMessage(dynamic senderID, string v)

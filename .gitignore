@@ -3,3 +3,6 @@
 ################################################################################
 
 /HQQWebhook/bin/Debug/netcoreapp2.2
+.vs
+/HQQUnitTest/bin/Debug/netcoreapp3.1
+/HQQUnitTest/obj
