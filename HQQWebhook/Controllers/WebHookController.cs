@@ -18,6 +18,7 @@ using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using HQQWebhook.Model;
 using HQQWebhook.Manager;
+using Microsoft.Extensions.Logging;
 
 namespace HQQWebhook.Controllers
 {
@@ -32,19 +33,24 @@ namespace HQQWebhook.Controllers
     public class WebHookController : Controller
     {
         private readonly IConfiguration WebConfig;
+        private readonly ILogger<VersionController> logger;
+
         private FacebookAPIManager fbAPIMgr;
         private FbWebhookConfig fbConfig = new FbWebhookConfig();
         private List<string> lstFeed2Chat = new List<string>();
         private List<string> lstFeed2ChatResp = new List<string>();
+        private List<string> lstReply2Comment = new List<string>();
 
-        public WebHookController(IConfiguration configuration)
+        public WebHookController(IConfiguration configuration, ILogger<VersionController> log)
         {
             WebConfig = configuration;
             fbConfig = configuration.GetSection("FbWebhookConfig").Get<FbWebhookConfig>();
-            lstFeed2Chat = configuration.GetSection("FeedResponse:Feed2Chat").Get<List<string>>(); 
+            lstFeed2Chat = configuration.GetSection("FeedResponse:Feed2Chat").Get<List<string>>();
             lstFeed2ChatResp = configuration.GetSection("FeedResponse:Feed2ChatResp").Get<List<string>>();
+            lstReply2Comment = configuration.GetSection("FeedResponse:Reply2Comment").Get<List<string>>();
 
-            fbAPIMgr = new FacebookAPIManager(fbConfig);
+            this.logger = log;
+            fbAPIMgr = new FacebookAPIManager(fbConfig, logger);
         }
 
         /*
@@ -82,7 +88,7 @@ namespace HQQWebhook.Controllers
         {
             // dynamic dataContent = content; JObject
 
-            if (dataContent["object"].Value == "page" )
+            if (dataContent["object"].Value == "page")
             {
                 foreach (var pageEntry in dataContent.entry)
                 {
@@ -125,11 +131,12 @@ namespace HQQWebhook.Controllers
                     }
                     else
                     {
-                        if (pageEntry != null && fbConfig.EnabledFeedResponse) {
+                        if (pageEntry != null && fbConfig.EnabledFeedResponse)
+                        {
                             dynamic dmPageEntry = (dynamic)pageEntry;
                             if (dmPageEntry.changes != null)
                             {
-                                if (dmPageEntry.changes[0].field != null 
+                                if (dmPageEntry.changes[0].field != null
                                     && dmPageEntry.changes[0].field == "feed")
                                 {
                                     recievedFeedAction(dmPageEntry.changes[0].value);
@@ -149,12 +156,15 @@ namespace HQQWebhook.Controllers
             if (feedResponse.verb == "add")
             {
                 string strUserId;
+                Random rand = new Random();
+
                 FbFeedResponse feedResp = new FbFeedResponse();
-                
+
                 feedResp.PostID = feedResponse.post_id;
                 feedResp.CommentID = feedResponse.comment_id;
                 feedResp.Message = feedResponse.message;
                 feedResp.FromName = feedResponse.from.name;
+                feedResp.PostURL = feedResponse.permalink_url;
 
                 strUserId = feedResponse.from.id;
 
@@ -165,14 +175,20 @@ namespace HQQWebhook.Controllers
                     feedResp.RecipientId = fbAPIMgr.GetSPID(strUserId);
                     if (!string.IsNullOrEmpty(feedResp.RecipientId) && lstFeed2Chat.Contains(feedResp.Message))
                     {
-                        sendTextMessageCommentReply(feedResp, lstFeed2ChatResp[0]);
+                        SendTextMessageReply(feedResp, lstFeed2ChatResp[0]);
+                        var selectedMeItem = rand.Next(0, lstReply2Comment.Count() - 1);
+                        ReplyComment(feedResp, lstReply2Comment[selectedMeItem]);
                     }
                 }
-                catch (Exception){
+                catch (Exception ex)
+                {
 
+                    logger.LogInformation(ConstInfo.LOG_TRACE_PREFIX +
+                        string.Format(" recievedFeedAction, Ex: {0}, Source: {1}"
+                        , ex.Message
+                        , JsonConvert.SerializeObject(feedResp))
+                        );
                 }
-
-              
             }
         }
 
@@ -244,12 +260,13 @@ namespace HQQWebhook.Controllers
             // Try to get attachment.
             try
             {
-                 messageAttachments = message.attachments;
+                messageAttachments = message.attachments;
             }
-            catch (Exception){
-                
+            catch (Exception)
+            {
+
             }
-           
+
             var quickReply = message.quick_reply;
 
             if (!string.IsNullOrEmpty(isEcho))
@@ -265,7 +282,7 @@ namespace HQQWebhook.Controllers
                 //console.log("Quick reply for message %s with payload %s",
                 //messageId, quickReplyPayload);
 
-                sendTextMessage(senderID, "Quick reply tapped");
+                SendTextMessage(senderID, "Quick reply tapped");
                 return;
             }
 
@@ -334,19 +351,19 @@ namespace HQQWebhook.Controllers
                         sendTypingOff(senderID);
                         break;
 
-                    //case "account linking":
-                    //    requiresServerURL(sendAccountLinking, [senderID]);
-                    //    break;
+                        //case "account linking":
+                        //    requiresServerURL(sendAccountLinking, [senderID]);
+                        //    break;
 
-                    //default:
-                    //    sendTextMessage(senderID, messageText);
-                    //    break;
+                        //default:
+                        //    sendTextMessage(senderID, messageText);
+                        //    break;
 
                 }
             }
             else if (!string.IsNullOrEmpty(messageAttachments))
             {
-                sendTextMessage(senderID, "Message with attachment received");
+                SendTextMessage(senderID, "Message with attachment received");
             }
         }
 
@@ -470,10 +487,10 @@ namespace HQQWebhook.Controllers
 
             // When an authentication is received, we'll send a message back to the sender
             // to let them know it was successful.
-            sendTextMessage(senderID, "Authentication successful");
+            SendTextMessage(senderID, "Authentication successful");
         }
 
-        private void sendTextMessage(dynamic recipientId, string messageText)
+        private void SendTextMessage(dynamic recipientId, string messageText)
         {
             var messageData = new
             {
@@ -491,8 +508,8 @@ namespace HQQWebhook.Controllers
             fbAPIMgr.CallSendAPI(messageData);
         }
 
-        private void sendTextMessageCommentReply(
-            FbFeedResponse fResp, 
+        private void SendTextMessageReply(
+            FbFeedResponse fResp,
             string messageText)
         {
             var messageData = new
@@ -507,18 +524,41 @@ namespace HQQWebhook.Controllers
                 message = new
                 {
                     text = messageText,
-                    metadata = "DEVELOPER_DEFINED_METADATA"
+                    metadata = "HelloQQ Auto Private Message"
+                    //,attachment = new
+                    //{
+                    //    type = "template",
+                    //    payload = new
+                    //    {
+                    //        template_type = "media",
+                    //        elements = new[] {
+                    //         new  {
+                    //                media_type = "image",
+                    //                url = fResp.PostURL
+                    //            }
+                    //        }
+                    //    }
+                    //}
                 }
             };
 
             fbAPIMgr.CallSendAPI(messageData);
         }
 
+        private void ReplyComment(FbFeedResponse fResp, string replyMessage)
+        {
+            var messageData = new
+            {
+                message = replyMessage
+            };
+
+            fbAPIMgr.ReplyComment(fResp.CommentID, messageData);
+        }
+
         private void receivedMessage(dynamic senderID, string v)
         {
             throw new NotImplementedException();
         }
-
     }
 
     public static class HttpClientExtensions

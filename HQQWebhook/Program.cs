@@ -23,9 +23,15 @@ namespace HQQWebhook
 
             BuildWebHost(args).Run();
         }
+        
+        //# Logging https://github.com/serilog/serilog-extensions-logging-file
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                .ConfigureLogging((hostingContext, builder) =>
+                {
+                    builder.AddFile(Configuration.GetSection("Logging"));
+                })
                 .UseStartup<Startup>()
                 .Build();
     }

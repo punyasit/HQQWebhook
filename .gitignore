@@ -2,7 +2,12 @@
 # This .gitignore file was automatically created by Microsoft(R) Visual Studio.
 ################################################################################
 
+/HQQWebhook/bin/Debug/
 /HQQWebhook/bin/Debug/netcoreapp2.2
+/HQQWebhook/.vs
 .vs
 /HQQUnitTest/bin/Debug/netcoreapp3.1
 /HQQUnitTest/obj
+/HQQWebhook/bin/Release/netcoreapp2.2
+/HQQWebhook/Logs
+/HQQWebhook/obj/HQQWebhook.csproj.EntityFrameworkCore.targets
