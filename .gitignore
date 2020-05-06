@@ -11,3 +11,5 @@
 /HQQWebhook/bin/Release/netcoreapp2.2
 /HQQWebhook/Logs
 /HQQWebhook/obj/HQQWebhook.csproj.EntityFrameworkCore.targets
+/HQQLibrary.Model/bin/Debug
+/HQQLibrary.Model/obj

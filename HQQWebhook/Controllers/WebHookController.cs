@@ -19,6 +19,8 @@ using System.Text.RegularExpressions;
 using HQQWebhook.Model;
 using HQQWebhook.Manager;
 using Microsoft.Extensions.Logging;
+using System.Dynamic;
+using HQQWebhook.Model.FacebookMessaging;
 
 namespace HQQWebhook.Controllers
 {
@@ -269,21 +271,24 @@ namespace HQQWebhook.Controllers
 
             var quickReply = message.quick_reply;
 
-            if (!string.IsNullOrEmpty(isEcho))
+            if (isEcho != null)
             {
                 // Just logging message echoes to console
                 //console.log("Received echo for message %s and app %d with metadata %s",
                 //messageId, appId, metadata);
                 return;
             }
-            else if (!string.IsNullOrEmpty(quickReply))
+            else if (quickReply != null)
             {
                 var quickReplyPayload = quickReply.payload;
+
                 //console.log("Quick reply for message %s with payload %s",
                 //messageId, quickReplyPayload);
 
-                SendTextMessage(senderID, "Quick reply tapped");
-                return;
+                //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
+
+                // SendTextMessage(senderID, "Quick reply tapped");
+                /// return;
             }
 
             if (!string.IsNullOrEmpty(messageText))
@@ -300,8 +305,41 @@ namespace HQQWebhook.Controllers
                         sendHiMessage(senderID);
                         break;
 
-                    case "image":
+                    case "hq:image":
                         sendImageMessage(senderID);
+                        break;
+
+                    case "hq:quickreply":
+                        List<fbQuickReplyItem> replyItems = new List<fbQuickReplyItem>();
+                        replyItems.Add(new fbQuickReplyItem
+                        {
+                            ContentType = "text",
+                            Title = "หูฟัง",
+                            Payload = "HQQ_PL_HEADPHONE",
+                            ImageURL = "https://cdn4.iconfinder.com/data/icons/crystal_office/cd/png/cd-24.png"
+                        });
+
+                        replyItems.Add(new fbQuickReplyItem
+                        {
+                            ContentType = "text",
+                            Title = "นาฬิกา GPS",
+                            Payload = "HQQ_PL_GPS_WATCH",
+                            ImageURL = "https://cdn4.iconfinder.com/data/icons/crystal_office/cmd2/png/cmd2-24.png"
+                        });
+
+                        replyItems.Add(new fbQuickReplyItem
+                        {
+                            ContentType = "text",
+                            Title = "ติดต่อแอดมิน",
+                            Payload = "HQQ_PL_ENDFLOW",
+                        });
+
+                        SendMessageQuickReply(senderID, "ลูกค้าสนใจสินค้าประเภทใหนคะ", replyItems);
+
+                        break;
+
+                    case "hq:productlist":
+                        SendMessageTemplate(senderID, new List<object>());
                         break;
 
                     //case "gif":
@@ -365,6 +403,106 @@ namespace HQQWebhook.Controllers
             {
                 SendTextMessage(senderID, "Message with attachment received");
             }
+        }
+
+        private void SendMessageQuickReply(
+            dynamic recipientId,
+            string replyMessage,
+            List<fbQuickReplyItem> lstQckOption)
+        {
+            MessageData msgData = new MessageData();
+            msgData.recipient = new Recipient()
+            {
+                id = recipientId
+            };
+            msgData.messaging_type = "RESPONSE";
+            msgData.message = new Message()
+            {
+                text = replyMessage
+            };
+
+            if (lstQckOption.Count > 0)
+            {
+                List<Quick_replies> lstQuickReply = new List<Quick_replies>();
+                foreach (var item in lstQckOption)
+                {
+                    lstQuickReply.Add(new Quick_replies()
+                    {
+                        content_type = "text",
+                        title = item.Title,
+                        payload = item.Payload,
+                        image_url = item.ImageURL
+                    });
+                }
+
+                msgData.message.quick_replies = lstQuickReply;
+            }
+
+            fbAPIMgr.CallSendAPI(msgData);
+        }
+
+        private void SendMessageTemplate(
+            dynamic recipientId,
+            List<object> lstProduct)
+        {
+            MessageData msgData = new MessageData();
+            Attachment attachment = new Attachment();
+            Payload payload = new Payload();
+            List<Elements> lstElProduct = new List<Elements>();
+            Elements elProduct = new Elements();
+
+            msgData.recipient = new Recipient()
+            {
+                id = recipientId
+            };
+
+            msgData.message = new Message();
+            attachment.type = "template";
+            payload.template_type = "generic";
+
+            lstProduct = new List<object>();
+            lstProduct.Add(new object());
+            lstProduct.Add(new object());
+            lstProduct.Add(new object());
+
+            foreach (var item in lstProduct)
+            {
+                elProduct = new Elements()
+                {
+                    title = "Mega M5",
+                    image_url = "https://dz.lnwfile.com/tdnolt.png",
+                    subtitle = "นาฬิกาผู้ชาย รุ่น Mega M5 gps ในตัว .. \n\nราคา: 1990บาท",
+                    default_action = new Default_action()
+                    {
+                        type = "web_url",
+                        url = "https://www.facebook.com/HelloQQShop/posts/2458462237595407/",
+                        webview_height_ratio = "tall"
+                    },
+                    buttons = new List<Buttons>()
+                    {
+                        new Buttons()
+                        {
+                            type = "web_url",
+                             url = "https://prf.hn/l/Km9gdYK",
+                             title="Shopee"
+                        },
+                         new Buttons()
+                        {
+                            type = "postback",
+                            title="ติดต่อแอดมิน",
+                            payload = "HQQ_PL_ENDFLOW"
+                        }
+                    }
+                };
+
+                lstElProduct.Add(elProduct);
+            }
+
+            payload.elements = lstElProduct;
+            attachment.payload = payload;
+            msgData.message.attachment = attachment;
+
+            fbAPIMgr.CallSendAPI(msgData);
         }
 
         private void sendImageMessage(dynamic recipientId)
