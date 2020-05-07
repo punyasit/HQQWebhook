@@ -1,9 +1,0 @@
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\bin\Release\netcoreapp2.2\HQQLibrary.deps.json
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\bin\Release\netcoreapp2.2\HQQLibrary.dll
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\bin\Release\netcoreapp2.2\HQQLibrary.pdb
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\obj\Release\netcoreapp2.2\HQQLibrary.csprojAssemblyReference.cache
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\obj\Release\netcoreapp2.2\HQQLibrary.csproj.CoreCompileInputs.cache
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\obj\Release\netcoreapp2.2\HQQLibrary.AssemblyInfoInputs.cache
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\obj\Release\netcoreapp2.2\HQQLibrary.AssemblyInfo.cs
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\obj\Release\netcoreapp2.2\HQQLibrary.dll
-Z:\Project\HelloQQ\Programming\Git\hqq-webhook\HQQWebhook\HQQLibrary\obj\Release\netcoreapp2.2\HQQLibrary.pdb

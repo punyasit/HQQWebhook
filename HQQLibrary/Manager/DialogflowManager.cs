@@ -14,7 +14,6 @@ using Z.EntityFramework.Plus;
 namespace HQQLibrary.Manager
 {
     public class DialogflowManager : HQQBase
-
     {
         public DialogflowManager()
             : base()
@@ -27,30 +26,41 @@ namespace HQQLibrary.Manager
             PrivateReply privateReply = new PrivateReply();
             List<HqqDialogflow> lstDialogFlow = new List<HqqDialogflow>();
 
-            var quickReplyItem = (from item in base.Context.HqqDialogflow
-                                where item.Status == 1
-                                && item.MatchKeywords.Contains(keyword)
-                                && item.FlowType == "private_reply"
-                                select item).FirstOrDefault();
+            var lstPrivateReply = (from item in base.Context.HqqDialogflow
+                                   where item.Status == 1
+                                   && item.MatchKeywords.Contains(keyword)
+                                   && item.FlowType == "private_reply"
+                                   select item).FirstOrDefault();
 
-            if (quickReplyItem != null)
+            if (lstPrivateReply != null)
             {
-                if (!string.IsNullOrEmpty(quickReplyItem.Payload))
+                if (!string.IsNullOrEmpty(lstPrivateReply.Payload))
                 {
-                    string[] responseMessages = quickReplyItem.Payload.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] responseMessages = lstPrivateReply.Payload.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var item in responseMessages)
                     {
                         privateReply.ReplyMessages.Add(item);
                     }
                 }
 
-                if (!string.IsNullOrEmpty(quickReplyItem.ResponseWording))
+                if (!string.IsNullOrEmpty(lstPrivateReply.ResponseAnswer))
                 {
-                    string[] responseComment = quickReplyItem.ResponseWording.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                    string[] responseComment = lstPrivateReply.ResponseAnswer.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
                     foreach (var item in responseComment)
                     {
                         privateReply.ResponseComments.Add(item);
                     }
+                }
+
+                if (!string.IsNullOrEmpty(lstPrivateReply.ResponseItems))
+                {
+                    lstDialogFlow = base.Context.HqqDialogflow
+                                   .FromSqlRaw(string.Format(@"SELECT * FROM hqq_dialogflow WHERE ID IN ({0})", lstPrivateReply.ResponseItems))
+                                   .Where(item => item.Status == 1)
+                                   .ToList();
+
+                    privateReply.PayloadResponses = new List<PayloadResponse>();
+                    FillPayloadItems(lstDialogFlow, privateReply.PayloadResponses);
                 }
             }
 
@@ -72,26 +82,39 @@ namespace HQQLibrary.Manager
             DialogflowInfo dialogFlowInfo = new DialogflowInfo();
             List<HqqDialogflow> lstDialogFlow = new List<HqqDialogflow>();
 
-            string respItems;
+            HqqDialogflow hqDialogResult;
+            string respItem;
+
             if (searchType == SearchType.Payload)
             {
-                respItems = (from item in base.Context.HqqDialogflow
-                             where item.Payload == searchKey
-                             && item.FlowType == "introduction"
-                             select item.ResponseItems).FirstOrDefault();
+                hqDialogResult = (from item in base.Context.HqqDialogflow
+                                  where item.Payload == searchKey
+                                  && item.FlowType == "introduction"
+                                  && item.Status == 1
+                                  select item).FirstOrDefault();
             }
             else
             {
-                respItems = (from item in base.Context.HqqDialogflow
-                             where item.MatchKeywords == searchKey
-                             && item.FlowType == "introduction"
-                             select item.ResponseItems).FirstOrDefault();
+                hqDialogResult = (from item in base.Context.HqqDialogflow
+                                  where item.MatchKeywords == searchKey
+                                  && item.FlowType == "introduction"
+                                  && item.Status == 1
+                                  select item).FirstOrDefault();
             }
 
-            if (!string.IsNullOrEmpty(respItems))
+            if (hqDialogResult == null) return null;
+
+            respItem = hqDialogResult.ResponseItems;
+            if (!string.IsNullOrEmpty(hqDialogResult.ResponseHeader))
             {
+                dialogFlowInfo.ResponseHeader = hqDialogResult.ResponseHeader
+                    .Split(new char[] { ';' },StringSplitOptions.RemoveEmptyEntries).ToList();
+            }
+
+            if (!string.IsNullOrEmpty(respItem))
+            {   
                 lstDialogFlow = base.Context.HqqDialogflow
-                                    .FromSqlRaw(string.Format(@"SELECT * FROM hqq_dialogflow WHERE ID IN ({0})", respItems))
+                                    .FromSqlRaw(string.Format(@"SELECT * FROM hqq_dialogflow WHERE ID IN ({0})", respItem))
                                     .Where(item => item.Status == 1)
                                     .ToList();
 
@@ -108,23 +131,17 @@ namespace HQQLibrary.Manager
                             dialogFlowInfo.dialogType = DialogFlowType.Payload;
                         }
 
-                        dialogFlowInfo.PayloadResponses = new List<PayloadResponse>();
-                        foreach (var item in lstDialogFlow)
-                        {
-                            dialogFlowInfo.PayloadResponses.Add(new PayloadResponse()
-                            {
-                                Payload = item.Payload,
-                                ResponseWording = item.ResponseWording
-                            });
-                        }
+                        var payloadResp = new List<PayloadResponse>();
+                        FillPayloadItems(lstDialogFlow, payloadResp);
+                        dialogFlowInfo.PayloadResponses = payloadResp;
                     }
                 }
             }
 
             List<int?> respProducts = new List<int?>();
-            if(lstDialogFlow.Count > 0) 
+            if (lstDialogFlow.Count > 0)
             {
-                respProducts =lstDialogFlow
+                respProducts = lstDialogFlow
                     .Where(item => item.ProductId != null)
                     .Select(item => item.ProductId).ToList();
             }
@@ -133,17 +150,20 @@ namespace HQQLibrary.Manager
             {
                 var productResult = base.Context.HqqProduct
                     .Where(item => item.Status == 1
-                     && respProducts.Contains(item.Id));
+                     && respProducts.Contains(item.Id)).ToList();
 
                 if (productResult.Count() > 0)
                 {
                     //#Loading Include
                     foreach (var item in productResult)
                     {
-                        item.HqqPrice = new List<HqqPrice>();
-                        item.HqqPrice.Add((from pItem in item.HqqPrice
+                        var priceItem = (from pItem in Context.HqqPrice
+                                         where pItem.ProductId == item.Id
                                          orderby pItem.PriceDate descending
-                                         select pItem).FirstOrDefault());
+                                         select pItem).FirstOrDefault();
+
+                        item.HqqPrice = new List<HqqPrice>();
+                        item.HqqPrice.Add(priceItem);
                     }
 
                     dialogFlowInfo.dialogType = DialogFlowType.Products;
@@ -156,38 +176,54 @@ namespace HQQLibrary.Manager
             return dialogFlowInfo;
         }
 
-        public enum SearchType { Payload, Keyword }
-        public enum DialogFlowType { None, Payload, Products, Mix }
-
-        public class DialogflowInfo
+        private static void FillPayloadItems(List<HqqDialogflow> lstDialogFlow, List<PayloadResponse> payloadResp)
         {
-            public DialogFlowType dialogType { get; set; }
-            public List<PayloadResponse> PayloadResponses { get; set; }
-            public List<HqqProduct> ResponseProducts { get; set; }
-
-            public DialogflowInfo()
+            foreach (var item in lstDialogFlow)
             {
-                PayloadResponses = new List<PayloadResponse>();
-                ResponseProducts = new List<HqqProduct>();
+                List<string> lstRespWording = item.ResponseAnswer.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+
+                payloadResp.Add(new PayloadResponse()
+                {
+                    Payload = item.Payload,
+                    ResponseAnswer = lstRespWording
+                });
             }
         }
+    }
 
-        public class PayloadResponse
+    public enum SearchType { Payload, Keyword }
+    public enum DialogFlowType { None, Payload, Products, Mix }
+    public class DialogflowInfo
+    {
+        public DialogFlowType dialogType { get; set; }
+        public List<string> ResponseHeader { get; set; }
+        public List<PayloadResponse> PayloadResponses { get; set; }
+        public List<HqqProduct> ResponseProducts { get; set; }
+
+        public DialogflowInfo()
         {
-            public string Payload { get; set; }
-            public string ResponseWording { get; set; }
+            PayloadResponses = new List<PayloadResponse>();
+            ResponseProducts = new List<HqqProduct>();
         }
+    }
 
-        public class PrivateReply
+    public class PayloadResponse
+    {
+        public string Payload { get; set; }
+        public List<string> ResponseAnswer { get; set; }
+        public string ImageURL { get; set; }
+    }
+
+    public class PrivateReply
+    {
+        public List<string> ResponseComments { get; set; }
+        public List<string> ReplyMessages { get; set; }
+        public List<PayloadResponse> PayloadResponses { get; set; }
+
+        public PrivateReply()
         {
-            public List<string> ResponseComments { get; set; }
-            public List<string> ReplyMessages { get; set; }
-
-            public PrivateReply()
-            {
-                ResponseComments = new List<string>();
-                ReplyMessages = new List<string>();
-            }
+            ResponseComments = new List<string>();
+            ReplyMessages = new List<string>();
         }
     }
 }

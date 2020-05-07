@@ -71,3 +71,95 @@
     }
   ]
 }
+
+ switch ()
+                {
+                    //case "hq:hello":
+                    //case "hq:hi":
+                    //    sendHiMessage(senderID);
+                    //    break;
+
+                    //case "hq:image":
+                    //    sendImageMessage(senderID);
+                    //    break;
+
+                    case "hq:quickreply":
+                        //List<fbQuickReplyItem> replyItems = new List<fbQuickReplyItem>();
+                        //replyItems.Add(new fbQuickReplyItem
+                        //{
+                        //    ContentType = "text",
+                        //    Title = "หูฟัง",
+                        //    Payload = "HQQ_PL_HEADPHONE",
+                        //    ImageURL = "https://cdn4.iconfinder.com/data/icons/crystal_office/cd/png/cd-24.png"
+                        //});
+                        //replyItems.Add(new fbQuickReplyItem
+                        //{
+                        //    ContentType = "text",
+                        //    Title = "นาฬิกา GPS",
+                        //    Payload = "HQQ_PL_GPS_WATCH",
+                        //    ImageURL = "https://cdn4.iconfinder.com/data/icons/crystal_office/cmd2/png/cmd2-24.png"
+                        //});
+                        //replyItems.Add(new fbQuickReplyItem
+                        //{
+                        //    ContentType = "text",
+                        //    Title = "ติดต่อแอดมิน",
+                        //    Payload = "HQQ_PL_ENDFLOW",
+                        //});
+
+                        //SendMessageQuickReply(senderID, "ลูกค้าสนใจสินค้าประเภทใหนคะ", replyItems);
+
+                        break;
+
+                    //case "hq:productlist":
+                    //    SendMessageTemplate(senderID, new List<object>());
+                    //    break;
+
+                    //case "gif":
+                    //    requiresServerURL(sendGifMessage, [senderID]);
+                    //    break;
+
+                    //case "audio":
+                    //    requiresServerURL(sendAudioMessage, [senderID]);
+                    //    break;
+
+                    //case "video":
+                    //    requiresServerURL(sendVideoMessage, [senderID]);
+                    //    break;
+
+                    //case "file":
+                    //    requiresServerURL(sendFileMessage, [senderID]);
+                    //    break;
+
+                    //case "ขอรายละเอียดเพิ่มเติม":
+                    //case "button":
+                    //    sendTypingOn(senderID);
+                    //    sendButtonMessage(senderID);
+                    //    break;
+
+                    //case "generic":
+                    //    requiresServerURL(sendGenericMessage, [senderID]);
+                    //    break;
+
+                    //case "receipt":
+                    //    requiresServerURL(sendReceiptMessage, [senderID]);
+                    //    break;
+
+                    //case "read receipt":
+                    //    sendReadReceipt(senderID);
+                    //    break;
+
+                    case "hq:typing on":
+                        sendTypingOn(senderID);
+                        break;
+
+                    case "hq:typing off":
+                        sendTypingOff(senderID);
+                        break;
+
+                        //case "account linking":
+                        //    requiresServerURL(sendAccountLinking, [senderID]);
+                        //    break;
+
+                        //default:
+                        //    sendTextMessage(senderID, messageText);
+                        //    break;

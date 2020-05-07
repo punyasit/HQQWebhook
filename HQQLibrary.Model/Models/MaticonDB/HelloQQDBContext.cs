@@ -35,9 +35,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
         {
             if (!optionsBuilder.IsConfigured)
             {
-                //#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                // optionsBuilder.UseMySql("server=localhost;port=3306;user=root;password=M@ticon.2019;database=HelloQQDB", x => x.ServerVersion("5.6.40-mysql"));
-                optionsBuilder.UseMySql(new AppConfiguration ().ConnectionString, x => x.ServerVersion("5.6.40-mysql"));
+                optionsBuilder.UseMySql(new AppConfiguration().ConnectionString, x => x.ServerVersion("5.6.40-mysql"));
             }
         }
 
@@ -95,7 +93,6 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasCollation("utf8_general_ci");
 
                 entity.Property(e => e.MatchKeywords)
-                    .IsRequired()
                     .HasColumnName("match_keywords")
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8")
@@ -107,19 +104,31 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasCharSet("utf8")
                     .HasCollation("utf8_general_ci");
 
+                entity.Property(e => e.PayloadImgUrl)
+                    .HasColumnName("payload_img_url")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
                 entity.Property(e => e.ProductId)
                     .HasColumnName("product_id")
                     .HasColumnType("int(11)");
 
-                entity.Property(e => e.ResponseItems)
-                    .HasColumnName("response_items")
-                    .HasColumnType("varchar(100)")
+                entity.Property(e => e.ResponseAnswer)
+                    .HasColumnName("response_answer")
+                    .HasColumnType("varchar(255)")
                     .HasCharSet("utf8")
                     .HasCollation("utf8_general_ci");
 
-                entity.Property(e => e.ResponseWording)
-                    .HasColumnName("response_wording")
+                entity.Property(e => e.ResponseHeader)
+                    .HasColumnName("response_header")
                     .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.ResponseItems)
+                    .HasColumnName("response_items")
+                    .HasColumnType("varchar(100)")
                     .HasCharSet("utf8")
                     .HasCollation("utf8_general_ci");
 

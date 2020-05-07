@@ -1,4 +1,0 @@
-D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQWebhook.csprojAssemblyReference.cache
-D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQWebhook.csproj.CoreCompileInputs.cache
-D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQWebhook.AssemblyInfoInputs.cache
-D:\Personal\HelloQQ\Source\QQNetCoreTest\QQNetCoreTest\obj\Debug\netcoreapp2.0\QQWebhook.AssemblyInfo.cs

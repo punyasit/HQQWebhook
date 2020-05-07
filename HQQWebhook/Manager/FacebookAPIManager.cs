@@ -75,9 +75,16 @@ namespace HQQWebhook.Manager
 
         public void CallSendAPI(dynamic messageData)
         {
+            var strJsonObject = JsonConvert.SerializeObject(messageData, new JsonSerializerSettings
+            {
+                DefaultValueHandling = DefaultValueHandling.Populate,
+                NullValueHandling = NullValueHandling.Ignore
+            });
+            var objMsgData = JsonConvert.DeserializeObject(strJsonObject);
+
             NETHTTP.HttpResponseMessage response = new NETHTTP.HttpClient().PostAsJsonAsync(
                 fbConfig.FacebookApi + API_SEND_MESSAGE + "?access_token=" + fbConfig.PageAccessToken
-                , (object)messageData).Result;
+                , (object)objMsgData).Result;
 
             if (response != null)
             {

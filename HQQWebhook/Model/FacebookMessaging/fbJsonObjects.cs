@@ -10,6 +10,7 @@ namespace HQQWebhook.Model.FacebookMessaging
     public class Recipient
     {
         public string id { get; set; }
+        public string comment_id { get; set; }
 
     }
     public class Quick_replies
@@ -71,5 +72,5 @@ namespace HQQWebhook.Model.FacebookMessaging
         public Payload payload { get; set; }
 
     }
-   
+
 }

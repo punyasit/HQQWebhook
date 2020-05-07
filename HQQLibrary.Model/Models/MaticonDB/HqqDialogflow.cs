@@ -10,7 +10,9 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public string MatchKeywords { get; set; }
         public int? ProductId { get; set; }
         public string Payload { get; set; }
-        public string ResponseWording { get; set; }
+        public string PayloadImgUrl { get; set; }
+        public string ResponseHeader { get; set; }
+        public string ResponseAnswer { get; set; }
         public string ResponseItems { get; set; }
         public sbyte? Status { get; set; }
 

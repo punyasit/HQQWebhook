@@ -3,24 +3,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
-
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
-
 using System.Net.Http;
+
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Microsoft.AspNetCore.WebUtilities;
 using System.IO;
 using System.Text;
 using Microsoft.AspNetCore.Http.Internal;
+
 using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using HQQWebhook.Model;
 using HQQWebhook.Manager;
 using Microsoft.Extensions.Logging;
+
 using System.Dynamic;
 using HQQWebhook.Model.FacebookMessaging;
+using HQQLibrary.Manager;
+using HQQLibrary.Model.Models.MaticonDB;
 
 namespace HQQWebhook.Controllers
 {
@@ -43,6 +46,9 @@ namespace HQQWebhook.Controllers
         private List<string> lstFeed2ChatResp = new List<string>();
         private List<string> lstReply2Comment = new List<string>();
 
+        private DialogflowManager dialogFlowMgr;
+        private enum ReplyType { PrivateReply, MessageReply };
+
         public WebHookController(IConfiguration configuration, ILogger<VersionController> log)
         {
             WebConfig = configuration;
@@ -53,6 +59,7 @@ namespace HQQWebhook.Controllers
 
             this.logger = log;
             fbAPIMgr = new FacebookAPIManager(fbConfig, logger);
+            dialogFlowMgr = new DialogflowManager();
         }
 
         /*
@@ -159,7 +166,6 @@ namespace HQQWebhook.Controllers
             {
                 string strUserId;
                 Random rand = new Random();
-
                 FbFeedResponse feedResp = new FbFeedResponse();
 
                 feedResp.PostID = feedResponse.post_id;
@@ -172,19 +178,42 @@ namespace HQQWebhook.Controllers
 
                 //# Validate existing sender Id from Database.
                 //# If not exist, call reciepient id from API
+
+                PrivateReply privateReply = dialogFlowMgr.GetPrivateReply(feedResp.Message);
+
                 try
                 {
-                    feedResp.RecipientId = fbAPIMgr.GetSPID(strUserId);
-                    if (!string.IsNullOrEmpty(feedResp.RecipientId) && lstFeed2Chat.Contains(feedResp.Message))
+                    if (!string.IsNullOrEmpty(feedResp.CommentID)
+                        && (privateReply != null
+                        && privateReply.ReplyMessages.Count > 0))
                     {
-                        SendTextMessageReply(feedResp, lstFeed2ChatResp[0]);
-                        var selectedMeItem = rand.Next(0, lstReply2Comment.Count() - 1);
-                        ReplyComment(feedResp, lstReply2Comment[selectedMeItem]);
+                        string replyMessage = string.Empty;
+                        var selectedItem = 0;
+                        if (privateReply.ReplyMessages.Count() > 1)
+                        {
+                            selectedItem = rand.Next(0, privateReply.ReplyMessages.Count);
+                            replyMessage = privateReply.ReplyMessages[selectedItem];
+                        }
+                        else
+                        {
+                            replyMessage = privateReply.ReplyMessages[0];
+                        }
+
+                        //# PRIVATE REPLY
+                        //SendPrivateReply(feedResp, replyMsg);
+                        SendMessageQuickReply(
+                            ReplyType.PrivateReply,
+                            feedResp.CommentID,
+                            replyMessage,
+                            privateReply.PayloadResponses);
+
+                        //# NOTIFY COMMENT
+                        selectedItem = rand.Next(0, lstReply2Comment.Count() - 1);
+                        ReplyComment(feedResp, privateReply.ResponseComments[selectedItem]);
                     }
                 }
                 catch (Exception ex)
                 {
-
                     logger.LogInformation(ConstInfo.LOG_TRACE_PREFIX +
                         string.Format(" recievedFeedAction, Ex: {0}, Source: {1}"
                         , ex.Message
@@ -270,7 +299,6 @@ namespace HQQWebhook.Controllers
             }
 
             var quickReply = message.quick_reply;
-
             if (isEcho != null)
             {
                 // Just logging message echoes to console
@@ -280,15 +308,29 @@ namespace HQQWebhook.Controllers
             }
             else if (quickReply != null)
             {
-                var quickReplyPayload = quickReply.payload;
-
-                //console.log("Quick reply for message %s with payload %s",
-                //messageId, quickReplyPayload);
+                var quickReplyPayload = quickReply.payload.ToString();
 
                 //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
+                DialogflowInfo dialogAnswer = dialogFlowMgr.GetDialogFromPayload(quickReplyPayload);
+                if (dialogAnswer.ResponseProducts != null)
+                {
+                    if (dialogAnswer.ResponseProducts.Count() > 0)
+                    {
+                        var respAnswer = RandomAnswer(dialogAnswer.ResponseHeader);
+                        SendTextMessage(senderID, respAnswer);
+                        SendMessageTemplate(senderID, dialogAnswer.ResponseProducts);
 
-                // SendTextMessage(senderID, "Quick reply tapped");
-                /// return;
+                    }
+                    else
+                    {
+                        var respAnswer = RandomAnswer(dialogAnswer.ResponseHeader);
+                        SendMessageQuickReply(ReplyType.MessageReply,
+                            senderID, respAnswer,
+                            dialogAnswer.PayloadResponses);
+                    }
+                }
+
+                return;
             }
 
             if (!string.IsNullOrEmpty(messageText))
@@ -296,154 +338,136 @@ namespace HQQWebhook.Controllers
                 // If we receive a text message, check to see if it matches any special
                 // keywords and send back the corresponding example. Otherwise, just echo
                 // the text we received.
-
                 Regex rgx = new Regex(@"/[^\w\s] / gi");
-                switch (rgx.Replace(messageText, "").Trim().ToLower())
+                string keyword = rgx.Replace(messageText, "").Trim().ToLower();
+                var dialogAnswer = dialogFlowMgr.GetDialogFromKeyword(keyword);
+                
+                if (dialogAnswer != null)
                 {
-                    case "hq:hello":
-                    case "hq:hi":
-                        sendHiMessage(senderID);
-                        break;
-
-                    case "hq:image":
-                        sendImageMessage(senderID);
-                        break;
-
-                    case "hq:quickreply":
-                        List<fbQuickReplyItem> replyItems = new List<fbQuickReplyItem>();
-                        replyItems.Add(new fbQuickReplyItem
-                        {
-                            ContentType = "text",
-                            Title = "หูฟัง",
-                            Payload = "HQQ_PL_HEADPHONE",
-                            ImageURL = "https://cdn4.iconfinder.com/data/icons/crystal_office/cd/png/cd-24.png"
-                        });
-
-                        replyItems.Add(new fbQuickReplyItem
-                        {
-                            ContentType = "text",
-                            Title = "นาฬิกา GPS",
-                            Payload = "HQQ_PL_GPS_WATCH",
-                            ImageURL = "https://cdn4.iconfinder.com/data/icons/crystal_office/cmd2/png/cmd2-24.png"
-                        });
-
-                        replyItems.Add(new fbQuickReplyItem
-                        {
-                            ContentType = "text",
-                            Title = "ติดต่อแอดมิน",
-                            Payload = "HQQ_PL_ENDFLOW",
-                        });
-
-                        SendMessageQuickReply(senderID, "ลูกค้าสนใจสินค้าประเภทใหนคะ", replyItems);
-
-                        break;
-
-                    case "hq:productlist":
-                        SendMessageTemplate(senderID, new List<object>());
-                        break;
-
-                    //case "gif":
-                    //    requiresServerURL(sendGifMessage, [senderID]);
-                    //    break;
-
-                    //case "audio":
-                    //    requiresServerURL(sendAudioMessage, [senderID]);
-                    //    break;
-
-                    //case "video":
-                    //    requiresServerURL(sendVideoMessage, [senderID]);
-                    //    break;
-
-                    //case "file":
-                    //    requiresServerURL(sendFileMessage, [senderID]);
-                    //    break;
-
-                    //case "ขอรายละเอียดเพิ่มเติม":
-                    //case "button":
-                    //    sendTypingOn(senderID);
-                    //    sendButtonMessage(senderID);
-                    //    break;
-
-                    //case "generic":
-                    //    requiresServerURL(sendGenericMessage, [senderID]);
-                    //    break;
-
-                    //case "receipt":
-                    //    requiresServerURL(sendReceiptMessage, [senderID]);
-                    //    break;
-
-                    //case "quick reply":
-                    //case "ตอบหน่อย":
-                    //    sendQuickReply(senderID);
-                    //    break;
-
-                    //case "read receipt":
-                    //    sendReadReceipt(senderID);
-                    //    break;
-
-                    case "hq:typing on":
-                        sendTypingOn(senderID);
-                        break;
-
-                    case "hq:typing off":
-                        sendTypingOff(senderID);
-                        break;
-
-                        //case "account linking":
-                        //    requiresServerURL(sendAccountLinking, [senderID]);
-                        //    break;
-
-                        //default:
-                        //    sendTextMessage(senderID, messageText);
-                        //    break;
-
+                    SendMessageQuickReply(ReplyType.MessageReply,
+                          senderID, RandomAnswer(dialogAnswer.ResponseHeader), dialogAnswer.PayloadResponses);
                 }
             }
-            else if (!string.IsNullOrEmpty(messageAttachments))
-            {
-                SendTextMessage(senderID, "Message with attachment received");
-            }
+
+        }
+
+        private string RandomAnswer(List<string> lstAnswer)
+        {
+            return lstAnswer[new Random().Next(0, lstAnswer.Count())];
         }
 
         private void SendMessageQuickReply(
-            dynamic recipientId,
+            ReplyType replyType,
+            dynamic reciepientId,
             string replyMessage,
-            List<fbQuickReplyItem> lstQckOption)
+            List<PayloadResponse> payloadResp)
         {
-            MessageData msgData = new MessageData();
-            msgData.recipient = new Recipient()
+            MessageData messageData = new MessageData();
+            if (replyType == ReplyType.PrivateReply)
             {
-                id = recipientId
-            };
-            msgData.messaging_type = "RESPONSE";
-            msgData.message = new Message()
+                messageData.recipient = new Recipient()
+                {
+                    comment_id = reciepientId
+                };
+            }
+            else
+            {
+                messageData.recipient = new Recipient()
+                {
+                    id = reciepientId
+                };
+                messageData.messaging_type = "RESPONSE";
+            }
+
+            messageData.message = new Message()
             {
                 text = replyMessage
             };
 
-            if (lstQckOption.Count > 0)
+            if (payloadResp.Count > 0)
             {
                 List<Quick_replies> lstQuickReply = new List<Quick_replies>();
-                foreach (var item in lstQckOption)
+                string respWording;
+                foreach (var item in payloadResp)
                 {
-                    lstQuickReply.Add(new Quick_replies()
+                    if (item.ResponseAnswer.Count > 1)
                     {
-                        content_type = "text",
-                        title = item.Title,
-                        payload = item.Payload,
-                        image_url = item.ImageURL
-                    });
+                        respWording = RandomAnswer(item.ResponseAnswer);
+                    }
+                    else
+                    {
+                        respWording = item.ResponseAnswer[0];
+                    }
+
+                    if (!string.IsNullOrEmpty(item.ImageURL))
+                    {
+                        lstQuickReply.Add(new Quick_replies()
+                        {
+                            content_type = "text",
+                            title = respWording,
+                            payload = item.Payload,
+                            image_url = item.ImageURL
+                        });
+                    }
+                    else
+                    {
+                        lstQuickReply.Add(new Quick_replies()
+                        {
+                            content_type = "text",
+                            title = respWording,
+                            payload = item.Payload,
+
+                        });
+                    }
                 }
 
-                msgData.message.quick_replies = lstQuickReply;
+                messageData.message.quick_replies = lstQuickReply;
             }
 
-            fbAPIMgr.CallSendAPI(msgData);
+            fbAPIMgr.CallSendAPI(messageData);
+        }
+
+        private void SendPrivateReply(
+            FbFeedResponse fResp,
+            string messageText)
+        {
+            var messageData = new
+            {
+                recipient = new
+                {
+                    comment_id = fResp.CommentID
+                    //,post_id = fResp.PostID
+                },
+
+                message = new
+                {
+                    text = messageText,
+                    metadata = "HQQ_AUTO_PRIVATE_MESSAGE"
+                    #region [Payload]
+                    //,attachment = new
+                    //{
+                    //    type = "template",
+                    //    payload = new
+                    //    {
+                    //        template_type = "media",
+                    //        elements = new[] {
+                    //         new  {
+                    //                media_type = "image",
+                    //                url = fResp.PostURL
+                    //            }
+                    //        }
+                    //    }
+                    //}
+                    #endregion
+                }
+            };
+
+            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void SendMessageTemplate(
             dynamic recipientId,
-            List<object> lstProduct)
+            List<HqqProduct> lstProduct)
         {
             MessageData msgData = new MessageData();
             Attachment attachment = new Attachment();
@@ -460,22 +484,18 @@ namespace HQQWebhook.Controllers
             attachment.type = "template";
             payload.template_type = "generic";
 
-            lstProduct = new List<object>();
-            lstProduct.Add(new object());
-            lstProduct.Add(new object());
-            lstProduct.Add(new object());
-
             foreach (var item in lstProduct)
             {
+                var hqqPrice = item.HqqPrice.FirstOrDefault();
                 elProduct = new Elements()
                 {
-                    title = "Mega M5",
-                    image_url = "https://dz.lnwfile.com/tdnolt.png",
-                    subtitle = "นาฬิกาผู้ชาย รุ่น Mega M5 gps ในตัว .. \n\nราคา: 1990บาท",
+                    title = item.Name,
+                    image_url = item.PreviewImageUrl,
+                    subtitle = item.Description + string.Format(@"\n\n ราคา: {0:n0}บาท", hqqPrice.Price),
                     default_action = new Default_action()
                     {
                         type = "web_url",
-                        url = "https://www.facebook.com/HelloQQShop/posts/2458462237595407/",
+                        url = item.InformationUrl,
                         webview_height_ratio = "tall"
                     },
                     buttons = new List<Buttons>()
@@ -483,8 +503,8 @@ namespace HQQWebhook.Controllers
                         new Buttons()
                         {
                             type = "web_url",
-                             url = "https://prf.hn/l/Km9gdYK",
-                             title="Shopee"
+                            url = hqqPrice.AffiliateUrl,
+                            title="Shopee"
                         },
                          new Buttons()
                         {
@@ -640,43 +660,6 @@ namespace HQQWebhook.Controllers
                 {
                     text = messageText,
                     metadata = "DEVELOPER_DEFINED_METADATA"
-                }
-            };
-
-            fbAPIMgr.CallSendAPI(messageData);
-        }
-
-        private void SendTextMessageReply(
-            FbFeedResponse fResp,
-            string messageText)
-        {
-            var messageData = new
-            {
-                recipient = new
-                {
-                    //id = fResp.RecipientId,
-                    comment_id = fResp.CommentID
-                    //,post_id = fResp.PostID
-                },
-
-                message = new
-                {
-                    text = messageText,
-                    metadata = "HelloQQ Auto Private Message"
-                    //,attachment = new
-                    //{
-                    //    type = "template",
-                    //    payload = new
-                    //    {
-                    //        template_type = "media",
-                    //        elements = new[] {
-                    //         new  {
-                    //                media_type = "image",
-                    //                url = fResp.PostURL
-                    //            }
-                    //        }
-                    //    }
-                    //}
                 }
             };
 

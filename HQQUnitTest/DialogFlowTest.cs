@@ -29,7 +29,7 @@ namespace HQQUnitTest
         [TestMethod]
         public void D02_GetDialogFromKeyword()
         {
-            DialogflowInfo result = dialogFlowMgr.GetDialogFromKeyword("แนะนำสินค้า");
+            DialogflowInfo result = dialogFlowMgr.GetDialogFromKeyword("ช่วยแนะนำให้ฉันได้ไหม");
             Assert.IsTrue(result.dialogType == DialogFlowType.Payload
                 && result.PayloadResponses.Count > 2);
         }
