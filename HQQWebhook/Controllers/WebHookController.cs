@@ -348,7 +348,6 @@ namespace HQQWebhook.Controllers
                           senderID, RandomAnswer(dialogAnswer.ResponseHeader), dialogAnswer.PayloadResponses);
                 }
             }
-
         }
 
         private string RandomAnswer(List<string> lstAnswer)
@@ -388,7 +387,7 @@ namespace HQQWebhook.Controllers
             {
                 List<Quick_replies> lstQuickReply = new List<Quick_replies>();
                 string respWording;
-                foreach (var item in payloadResp)
+                foreach (var item in payloadResp.OrderBy(item => item.Id))
                 {
                     if (item.ResponseAnswer.Count > 1)
                     {
@@ -486,35 +485,42 @@ namespace HQQWebhook.Controllers
 
             foreach (var item in lstProduct)
             {
-                var hqqPrice = item.HqqPrice.FirstOrDefault();
+                var hqqDefaultPrice = item.HqqPrice.Where(pi => pi.Channel.Name == "Facebook").FirstOrDefault();
+                var hqqOtherPrice = item.HqqPrice.Where(pi => pi.Channel.Name != "Facebook").ToList();
+
                 elProduct = new Elements()
                 {
                     title = item.Name,
                     image_url = item.PreviewImageUrl,
-                    subtitle = item.Description + string.Format(@"\n\n ราคา: {0:n0}บาท", hqqPrice.Price),
+                    subtitle = item.Description + string.Format(@"- ราคา:{0:n0}บาท", hqqDefaultPrice.Price),
                     default_action = new Default_action()
                     {
                         type = "web_url",
                         url = item.InformationUrl,
                         webview_height_ratio = "tall"
-                    },
-                    buttons = new List<Buttons>()
-                    {
-                        new Buttons()
-                        {
-                            type = "web_url",
-                            url = hqqPrice.AffiliateUrl,
-                            title="Shopee"
-                        },
-                         new Buttons()
-                        {
-                            type = "postback",
-                            title="ติดต่อแอดมิน",
-                            payload = "HQQ_PL_ENDFLOW"
-                        }
                     }
                 };
 
+                List<Buttons> buttons = new List<Buttons>();
+
+                foreach (var othrPrice in hqqOtherPrice)
+                {
+                    buttons.Add(new Buttons()
+                    {
+                        type = "web_url",
+                        url = othrPrice.AffiliateUrl,
+                        title = othrPrice.Channel.Name
+                    });
+                }
+
+                buttons.Add(new Buttons()
+                {
+                    type = "postback",
+                    title = "ติดต่อแอดมิน",
+                    payload = "HQQ_PL_ENDFLOW"
+                });
+
+                elProduct.buttons = buttons;
                 lstElProduct.Add(elProduct);
             }
 

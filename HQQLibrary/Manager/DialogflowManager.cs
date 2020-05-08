@@ -10,6 +10,7 @@ using Pomelo.EntityFrameworkCore.MySql;
 using System.Data.SqlClient;
 using MySql.Data.MySqlClient;
 using Z.EntityFramework.Plus;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 
 namespace HQQLibrary.Manager
 {
@@ -108,11 +109,11 @@ namespace HQQLibrary.Manager
             if (!string.IsNullOrEmpty(hqDialogResult.ResponseHeader))
             {
                 dialogFlowInfo.ResponseHeader = hqDialogResult.ResponseHeader
-                    .Split(new char[] { ';' },StringSplitOptions.RemoveEmptyEntries).ToList();
+                    .Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
 
             if (!string.IsNullOrEmpty(respItem))
-            {   
+            {
                 lstDialogFlow = base.Context.HqqDialogflow
                                     .FromSqlRaw(string.Format(@"SELECT * FROM hqq_dialogflow WHERE ID IN ({0})", respItem))
                                     .Where(item => item.Status == 1)
@@ -157,13 +158,19 @@ namespace HQQLibrary.Manager
                     //#Loading Include
                     foreach (var item in productResult)
                     {
-                        var priceItem = (from pItem in Context.HqqPrice
-                                         where pItem.ProductId == item.Id
-                                         orderby pItem.PriceDate descending
-                                         select pItem).FirstOrDefault();
+                        var priceGrp = Context.HqqPrice
+                        .Include(ic => ic.Channel)
+                        .Where(w => w.ProductId == item.Id)
+                        .Select(s => s).AsEnumerable()
+                        .GroupBy(gp => gp.ChannelId)
+                        .Select(gp2 => (from t2 in gp2 orderby t2.PriceDate descending select t2).FirstOrDefault())
+                        .ToList();
 
                         item.HqqPrice = new List<HqqPrice>();
-                        item.HqqPrice.Add(priceItem);
+                        foreach (var pItem in priceGrp)
+                        {
+                            item.HqqPrice.Add(pItem);
+                        }
                     }
 
                     dialogFlowInfo.dialogType = DialogFlowType.Products;
@@ -184,6 +191,7 @@ namespace HQQLibrary.Manager
 
                 payloadResp.Add(new PayloadResponse()
                 {
+                    Id = item.Id,
                     Payload = item.Payload,
                     ResponseAnswer = lstRespWording
                 });
@@ -209,6 +217,7 @@ namespace HQQLibrary.Manager
 
     public class PayloadResponse
     {
+        public int Id { get; set; }
         public string Payload { get; set; }
         public List<string> ResponseAnswer { get; set; }
         public string ImageURL { get; set; }

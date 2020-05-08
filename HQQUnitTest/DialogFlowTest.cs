@@ -36,7 +36,7 @@ namespace HQQUnitTest
         [TestMethod]
         public void D02_GetDialogFromPayload()
         {
-            DialogflowInfo result = dialogFlowMgr.GetDialogFromPayload("HQQ_PL_HEADPHONE");
+            DialogflowInfo result = dialogFlowMgr.GetDialogFromPayload("HQQ_PL_GPSWATCH");
             Assert.IsTrue(result.dialogType == DialogFlowType.Products
                 && result.ResponseProducts.Count > 0);
         }
