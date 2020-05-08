@@ -14,3 +14,10 @@
 /HQQLibrary.Model/bin/Debug
 /HQQLibrary.Model/obj
 /HQQLibrary/bin/Debug/netcoreapp2.2
+/HQQLibrary/obj/Debug/netcoreapp2.2/HQQLibrary.pdb
+/HQQLibrary/obj/Debug/netcoreapp2.2/HQQLibrary.csproj.CopyComplete
+*.dll
+/HQQLibrary/obj/Debug/netcoreapp2.2/HQQLibrary.csproj.CoreCompileInputs.cache
+/HQQLibrary/obj/Debug/netcoreapp2.2/HQQLibrary.csproj.FileListAbsolute.txt
+/HQQLibrary/obj/Release/netcoreapp2.2
+/HQQLibrary.Model/bin/Release/netcoreapp2.2
