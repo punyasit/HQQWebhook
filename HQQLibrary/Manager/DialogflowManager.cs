@@ -78,6 +78,20 @@ namespace HQQLibrary.Manager
             return GetDialogInfo(SearchType.Payload, payload);
         }
 
+        public List<PayloadResponse> GetDirectPayload(string payload)
+        {
+            List<PayloadResponse> payloadResp = new List<PayloadResponse>();
+
+            var result = (from item in base.Context.HqqDialogflow
+                          where item.Payload == payload
+                          && item.FlowType == "introduction"
+                          && item.Status == 1
+                          select item).ToList();
+
+            FillPayloadItems(result, payloadResp);
+            return payloadResp;
+        }
+
         private DialogflowInfo GetDialogInfo(SearchType searchType, string searchKey)
         {
             DialogflowInfo dialogFlowInfo = new DialogflowInfo();
@@ -112,16 +126,17 @@ namespace HQQLibrary.Manager
                     .Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
             }
 
+
             if (!string.IsNullOrEmpty(respItem))
             {
-                lstDialogFlow = base.Context.HqqDialogflow
+                lstDialogFlow = base.Context.HqqDialogflow                                
                                     .FromSqlRaw(string.Format(@"SELECT * FROM hqq_dialogflow WHERE ID IN ({0})", respItem))
                                     .Where(item => item.Status == 1)
                                     .ToList();
 
                 if (lstDialogFlow != null && lstDialogFlow.Count > 0)
                 {
-                    if (lstDialogFlow.Where(item => item.ProductId.HasValue).Count() == 0)
+                    if (lstDialogFlow.Where(item => item.ProductId.HasValue).Count() > 0)
                     {
                         if (dialogFlowInfo.dialogType == DialogFlowType.Products)
                         {
@@ -131,9 +146,13 @@ namespace HQQLibrary.Manager
                         {
                             dialogFlowInfo.dialogType = DialogFlowType.Payload;
                         }
+                    }
 
-                        var payloadResp = new List<PayloadResponse>();
-                        FillPayloadItems(lstDialogFlow, payloadResp);
+                    //# LOAD QUICK RESPONSE WITHOUT PRODUCT
+                    var payloadResp = new List<PayloadResponse>();
+                    FillPayloadItems(lstDialogFlow.Where(item => !item.ProductId.HasValue).ToList(), payloadResp);
+                    if (payloadResp.Count > 0)
+                    {
                         dialogFlowInfo.PayloadResponses = payloadResp;
                     }
                 }
@@ -150,6 +169,7 @@ namespace HQQLibrary.Manager
             if (respProducts.Count > 0)
             {
                 var productResult = base.Context.HqqProduct
+                    .Include(item => item.HqqDialogflowAddon)
                     .Where(item => item.Status == 1
                      && respProducts.Contains(item.Id)).ToList();
 
@@ -177,7 +197,6 @@ namespace HQQLibrary.Manager
                     dialogFlowInfo.ResponseProducts = new List<HqqProduct>();
                     dialogFlowInfo.ResponseProducts = productResult.ToList();
                 }
-
             }
 
             return dialogFlowInfo;
@@ -185,16 +204,17 @@ namespace HQQLibrary.Manager
 
         private static void FillPayloadItems(List<HqqDialogflow> lstDialogFlow, List<PayloadResponse> payloadResp)
         {
-            foreach (var item in lstDialogFlow)
+            foreach (var item in lstDialogFlow
+                .Where(item => !string.IsNullOrEmpty(item.ResponseAnswer)).ToList())
             {
-                List<string> lstRespWording = item.ResponseAnswer.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                List<string> lstRespWording = item.ResponseAnswer
+                    .Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
 
                 payloadResp.Add(new PayloadResponse()
-                {
-                    Id = item.Id,
+                {   Id = item.Id,
                     Payload = item.Payload,
                     ResponseAnswer = lstRespWording
-                });
+                });;
             }
         }
     }

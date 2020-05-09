@@ -18,6 +18,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
 
         public virtual DbSet<HqqCategory> HqqCategory { get; set; }
         public virtual DbSet<HqqDialogflow> HqqDialogflow { get; set; }
+        public virtual DbSet<HqqDialogflowAddon> HqqDialogflowAddon { get; set; }
         public virtual DbSet<HqqImages> HqqImages { get; set; }
         public virtual DbSet<HqqLogLogin> HqqLogLogin { get; set; }
         public virtual DbSet<HqqMember> HqqMember { get; set; }
@@ -141,6 +142,69 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasForeignKey(d => d.ProductId)
                     .OnDelete(DeleteBehavior.Cascade)
                     .HasConstraintName("product_link_dialogflow");
+            });
+
+            modelBuilder.Entity<HqqDialogflowAddon>(entity =>
+            {
+                entity.ToTable("hqq_dialogflow_addon");
+
+                entity.HasIndex(e => e.DialogflowId)
+                    .HasName("dialogflow_lnk_addon_idx");
+
+                entity.HasIndex(e => e.ProductId)
+                    .HasName("product_lnk_addon_idx");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.Description)
+                    .HasColumnName("description")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.DialogflowId)
+                    .HasColumnName("dialogflow_id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .HasColumnType("varchar(100)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.ProductId)
+                    .HasColumnName("product_id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.Status)
+                    .HasColumnName("status")
+                    .HasColumnType("tinyint(4)");
+
+                entity.Property(e => e.Type)
+                    .HasColumnName("type")
+                    .HasColumnType("varchar(15)")
+                    .HasComment("web_url, postback, video")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.Url)
+                    .HasColumnName("url")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.HasOne(d => d.Dialogflow)
+                    .WithMany(p => p.HqqDialogflowAddon)
+                    .HasForeignKey(d => d.DialogflowId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("dialogflow_lnk_addon");
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.HqqDialogflowAddon)
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("product_lnk_addon");
             });
 
             modelBuilder.Entity<HqqImages>(entity =>

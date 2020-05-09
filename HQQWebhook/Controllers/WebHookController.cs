@@ -42,24 +42,21 @@ namespace HQQWebhook.Controllers
 
         private FacebookAPIManager fbAPIMgr;
         private FbWebhookConfig fbConfig = new FbWebhookConfig();
-        private List<string> lstFeed2Chat = new List<string>();
-        private List<string> lstFeed2ChatResp = new List<string>();
-        private List<string> lstReply2Comment = new List<string>();
-
         private DialogflowManager dialogFlowMgr;
+        private DialogflowInfo endFlowItem;
         private enum ReplyType { PrivateReply, MessageReply };
+        private PayloadResponse endflowPayload;
 
         public WebHookController(IConfiguration configuration, ILogger<VersionController> log)
         {
             WebConfig = configuration;
             fbConfig = configuration.GetSection("FbWebhookConfig").Get<FbWebhookConfig>();
-            lstFeed2Chat = configuration.GetSection("FeedResponse:Feed2Chat").Get<List<string>>();
-            lstFeed2ChatResp = configuration.GetSection("FeedResponse:Feed2ChatResp").Get<List<string>>();
-            lstReply2Comment = configuration.GetSection("FeedResponse:Reply2Comment").Get<List<string>>();
+            var strEndflowPayload = configuration.GetSection("DialogFlow:EndflowPayload").Value;
 
             this.logger = log;
             fbAPIMgr = new FacebookAPIManager(fbConfig, logger);
             dialogFlowMgr = new DialogflowManager();
+            endflowPayload = dialogFlowMgr.GetDirectPayload(strEndflowPayload).FirstOrDefault();
         }
 
         /*
@@ -108,34 +105,45 @@ namespace HQQWebhook.Controllers
                     {
                         foreach (var messagingEvent in pageEntry.messaging)
                         {
-                            if (messagingEvent.optin != null)
-                            {
-                                receivedAuthentication(messagingEvent);
-                            }
-                            else if (messagingEvent.message != null)
+                            if (messagingEvent.message != null)
                             {
                                 receivedMessage(messagingEvent);
                             }
-                            else if (messagingEvent.deliver != null)
-                            {
-                                receivedDeliveryConfirmation(messagingEvent);
-                            }
-                            else if (messagingEvent.postback != null)
-                            {
-                                receivedPostback(messagingEvent);
-                            }
-                            else if (messagingEvent.read != null)
-                            {
-                                receivedMessageRead(messagingEvent);
-                            }
-                            else if (messagingEvent.account_linking != null)
-                            {
-                                receivedAccountLink(messagingEvent);
-                            }
-                            else
-                            {
-                                Console.Write(string.Format("Webhook received unknown messagingEvent: {0} ", messagingEvent));
-                            }
+
+                            //# OTHER MEESAGE TYPE #//
+                            //########################
+                            #region [ UNUSED: OTHER MESSAGE TYPE ]
+
+                            //if (messagingEvent.optin != null)
+                            //{
+                            //    receivedAuthentication(messagingEvent);
+                            //}
+                            //else if (messagingEvent.message != null)
+                            //{
+                            //    receivedMessage(messagingEvent);
+                            //}
+                            //else if (messagingEvent.deliver != null)
+                            //{
+                            //    receivedDeliveryConfirmation(messagingEvent);
+                            //}
+                            //else if (messagingEvent.postback != null)
+                            //{
+                            //    receivedPostback(messagingEvent);
+                            //}
+                            //else if (messagingEvent.read != null)
+                            //{
+                            //    receivedMessageRead(messagingEvent);
+                            //}
+                            //else if (messagingEvent.account_linking != null)
+                            //{
+                            //    receivedAccountLink(messagingEvent);
+                            //}
+                            //else
+                            //{
+                            //    Console.Write(string.Format("Webhook received unknown messagingEvent: {0} ", messagingEvent));
+                            //}
+
+                            #endregion
                         }
                     }
                     else
@@ -208,8 +216,7 @@ namespace HQQWebhook.Controllers
                             privateReply.PayloadResponses);
 
                         //# NOTIFY COMMENT
-                        selectedItem = rand.Next(0, lstReply2Comment.Count() - 1);
-                        ReplyComment(feedResp, privateReply.ResponseComments[selectedItem]);
+                        ReplyComment(feedResp, RandomAnswer(privateReply.ResponseComments));
                     }
                 }
                 catch (Exception ex)
@@ -271,32 +278,31 @@ namespace HQQWebhook.Controllers
         private void receivedMessage(dynamic messagingEvent)
         {
             var senderID = messagingEvent.sender.id;
-            var recipientID = messagingEvent.recipient.id;
-            var timeOfMessage = messagingEvent.timestamp;
             var message = messagingEvent.message;
-
-            //console.log("Received message for user %d and page %d at %d with message:",
-            //senderID, recipientID, timeOfMessage);
-            //console.log(JSON.stringify(message));
-
             string isEcho = message.is_echo;
-            string messageId = message.mid;
-            string appId = message.app_id;
-            string metadata = message.metadata;
-
-            // You may get a text or attachment but not both
             string messageText = message.text;
-            string messageAttachments = string.Empty;
+            string respHeader = string.Empty;
 
-            // Try to get attachment.
-            try
-            {
-                messageAttachments = message.attachments;
-            }
-            catch (Exception)
-            {
+            #region[UNUSED : MESSAGE TYPE THAT MAY BE USE IN THE FUTURE]
+            //var recipientID = messagingEvent.recipient.id;
+            //var timeOfMessage = messagingEvent.timestamp;
+            //string messageId = message.mid;
+            //string appId = message.app_id;
+            //string metadata = message.metadata;
 
-            }
+            //# USE FOR IMAGE CHECKING AND PROCESSING
+            //# You may get a text or attachment but not both
+            //# Try to get attachment.
+
+            //string messageAttachments = string.Empty;
+            //try
+            //{
+            //    messageAttachments = message.attachments;
+            //}
+            //catch (Exception)
+            //{
+            //}
+            #endregion
 
             var quickReply = message.quick_reply;
             if (isEcho != null)
@@ -312,22 +318,21 @@ namespace HQQWebhook.Controllers
 
                 //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
                 DialogflowInfo dialogAnswer = dialogFlowMgr.GetDialogFromPayload(quickReplyPayload);
-                if (dialogAnswer.ResponseProducts != null)
-                {
-                    if (dialogAnswer.ResponseProducts.Count() > 0)
-                    {
-                        var respAnswer = RandomAnswer(dialogAnswer.ResponseHeader);
-                        SendTextMessage(senderID, respAnswer);
-                        SendMessageTemplate(senderID, dialogAnswer.ResponseProducts);
 
-                    }
-                    else
-                    {
-                        var respAnswer = RandomAnswer(dialogAnswer.ResponseHeader);
-                        SendMessageQuickReply(ReplyType.MessageReply,
-                            senderID, respAnswer,
-                            dialogAnswer.PayloadResponses);
-                    }
+                if (dialogAnswer.ResponseProducts != null
+                    && dialogAnswer.ResponseProducts.Count() > 0)
+                {
+                    respHeader = RandomAnswer(dialogAnswer.ResponseHeader);
+                    SendTextMessage(senderID, respHeader);
+                    SendMessageTemplate(senderID, dialogAnswer.ResponseProducts);
+                }
+
+                if (dialogAnswer.PayloadResponses != null
+                     && dialogAnswer.PayloadResponses.Count > 0)
+                {
+                    SendMessageQuickReply(ReplyType.MessageReply,
+                        senderID, respHeader,
+                        dialogAnswer.PayloadResponses);
                 }
 
                 return;
@@ -341,7 +346,7 @@ namespace HQQWebhook.Controllers
                 Regex rgx = new Regex(@"/[^\w\s] / gi");
                 string keyword = rgx.Replace(messageText, "").Trim().ToLower();
                 var dialogAnswer = dialogFlowMgr.GetDialogFromKeyword(keyword);
-                
+
                 if (dialogAnswer != null)
                 {
                     SendMessageQuickReply(ReplyType.MessageReply,
@@ -349,10 +354,9 @@ namespace HQQWebhook.Controllers
                 }
             }
         }
-
         private string RandomAnswer(List<string> lstAnswer)
         {
-            return lstAnswer[new Random().Next(0, lstAnswer.Count())];
+            return lstAnswer[new Random().Next(0, ((lstAnswer.Count() - 1) < 0 ? 0 : lstAnswer.Count()))];
         }
 
         private void SendMessageQuickReply(
@@ -502,7 +506,6 @@ namespace HQQWebhook.Controllers
                 };
 
                 List<Buttons> buttons = new List<Buttons>();
-
                 foreach (var othrPrice in hqqOtherPrice)
                 {
                     buttons.Add(new Buttons()
@@ -513,11 +516,24 @@ namespace HQQWebhook.Controllers
                     });
                 }
 
+                if(item.HqqDialogflowAddon != null
+                    &&item.HqqDialogflowAddon.ToList().Count > 0){
+                    foreach (var hdfa in item.HqqDialogflowAddon.ToList())
+                    {
+                        buttons.Add(new Buttons()
+                        {
+                            type = hdfa.Type,
+                            url = hdfa.Url,
+                            title = hdfa.Name
+                        });
+                    }
+                }
+
                 buttons.Add(new Buttons()
                 {
                     type = "postback",
-                    title = "ติดต่อแอดมิน",
-                    payload = "HQQ_PL_ENDFLOW"
+                    title = RandomAnswer(endflowPayload.ResponseAnswer),
+                    payload = endflowPayload.Payload
                 });
 
                 elProduct.buttons = buttons;

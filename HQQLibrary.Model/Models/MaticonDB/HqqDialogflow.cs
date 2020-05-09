@@ -5,6 +5,11 @@ namespace HQQLibrary.Model.Models.MaticonDB
 {
     public partial class HqqDialogflow
     {
+        public HqqDialogflow()
+        {
+            HqqDialogflowAddon = new HashSet<HqqDialogflowAddon>();
+        }
+
         public int Id { get; set; }
         public string FlowType { get; set; }
         public string MatchKeywords { get; set; }
@@ -17,5 +22,6 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public sbyte? Status { get; set; }
 
         public virtual HqqProduct Product { get; set; }
+        public virtual ICollection<HqqDialogflowAddon> HqqDialogflowAddon { get; set; }
     }
 }

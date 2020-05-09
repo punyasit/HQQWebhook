@@ -29,7 +29,8 @@ namespace HQQUnitTest
         [TestMethod]
         public void D02_GetDialogFromKeyword()
         {
-            DialogflowInfo result = dialogFlowMgr.GetDialogFromKeyword("ช่วยแนะนำให้ฉันได้ไหม");
+            //DialogflowInfo result = dialogFlowMgr.GetDialogFromKeyword("ช่วยแนะนำให้ฉันได้ไหม");
+            DialogflowInfo result = dialogFlowMgr.GetDialogFromKeyword("สนใจสินค้า");
             Assert.IsTrue(result.dialogType == DialogFlowType.Payload
                 && result.PayloadResponses.Count > 2);
         }
@@ -39,6 +40,14 @@ namespace HQQUnitTest
             DialogflowInfo result = dialogFlowMgr.GetDialogFromPayload("HQQ_PL_GPSWATCH");
             Assert.IsTrue(result.dialogType == DialogFlowType.Products
                 && result.ResponseProducts.Count > 0);
+        }
+
+        [TestMethod]
+        public void D03_GetDirectPayload()
+        {
+            //DialogflowInfo result = dialogFlowMgr.GetDialogFromPayload("HQQ_PL_GPSWATCH");
+            var result = dialogFlowMgr.GetDirectPayload("HQQ_PL_ENDFLOW");
+            Assert.IsTrue(result.Count > 0 );
         }
     }
 }

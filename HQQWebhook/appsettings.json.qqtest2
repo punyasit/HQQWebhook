@@ -1,4 +1,5 @@
 ﻿{
+  "Version": "v0.6",
   "Logging": {
     "IncludeScopes": false,
     "PathFormat": "Logs/qqlogs-{Date}.txt",
@@ -29,28 +30,13 @@
     "EnabledAutoMessage": "true",
     "EnabledFeedResponse": "true"
   },
-  "FeedResponse": {
-    "Feed2Chat": [
-      "สนใจ",
-      "สนใจครับ",
-      "สนใจคับ",
-      "สนใจค่ะ"
-    ],
-    "Reply2Comment": [
-      "อินบ๊อคไปนะคะ",
-      "Inbox ไปนะคะ",
-      "รายละเอียด​ส่งให้ทาง Inbox นะคะ",
-      "รับทราบคะ​",
-      "ขออนุญาติส่งข้อมูลให้ทาง Inbox นะคะ",
-      "ยินดีค๊า​ ทัก Inbox ไปละค่ะ"
-    ],
-    "Feed2ChatResp": [
-      "สวัสดีค่ะ สอบถามรายละเอียดได้เลยนะคะ"
-    ]
   },
-  "Version": "v0.1",
+  "DialogFlow": {
+    "EndflowPayload": "HQQ_PL_ENDFLOW"
+  },
   "ConnectionStrings": {
     "DefaultConnection": "server=localhost;port=3306;user=root;password=M@ticon.2019;database=helloqqdb"
   }
+
 
 }
