@@ -17,6 +17,9 @@ namespace HQQLibrary.Model.Models.MaticonDB
         }
 
         public virtual DbSet<HqqCategory> HqqCategory { get; set; }
+        public virtual DbSet<HqqCompetitorProduct> HqqCompetitorProduct { get; set; }
+        public virtual DbSet<HqqCompetitorShop> HqqCompetitorShop { get; set; }
+        public virtual DbSet<HqqCpProductStatistic> HqqCpProductStatistic { get; set; }
         public virtual DbSet<HqqDialogflow> HqqDialogflow { get; set; }
         public virtual DbSet<HqqDialogflowAddon> HqqDialogflowAddon { get; set; }
         public virtual DbSet<HqqImages> HqqImages { get; set; }
@@ -74,6 +77,211 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnName("status")
                     .HasColumnType("tinyint(4)")
                     .HasDefaultValueSql("'1'");
+            });
+
+            modelBuilder.Entity<HqqCompetitorProduct>(entity =>
+            {
+                entity.ToTable("hqq_competitor_product");
+
+                entity.HasIndex(e => e.ShopId)
+                    .HasName("shop_lnk_product_idx");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.CreatedOn)
+                    .HasColumnName("createdOn")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.ImageUrl)
+                    .HasColumnName("image_url")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.IsNew)
+                    .HasColumnName("is_new")
+                    .HasColumnType("tinyint(4)");
+
+                entity.Property(e => e.ModifiedOn)
+                    .HasColumnName("modifiedOn")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.ProductName)
+                    .HasColumnName("product_name")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.ProductRefId)
+                    .HasColumnName("product_ref_id")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.ShopId)
+                    .HasColumnName("shop_id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.Status)
+                    .HasColumnName("status")
+                    .HasColumnType("tinyint(4)")
+                    .HasDefaultValueSql("'1'");
+
+                entity.HasOne(d => d.Shop)
+                    .WithMany(p => p.HqqCompetitorProduct)
+                    .HasForeignKey(d => d.ShopId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("shop_lnk_product");
+            });
+
+            modelBuilder.Entity<HqqCompetitorShop>(entity =>
+            {
+                entity.ToTable("hqq_competitor_shop");
+
+                entity.HasIndex(e => e.ChannelId)
+                    .HasName("channel_lnk_competitor_shop_idx");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.ChannelId)
+                    .HasColumnName("channel_id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.CreatedOn)
+                    .HasColumnName("created_on")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.DataUrl)
+                    .HasColumnName("data_url")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.Description)
+                    .HasColumnName("description")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.Follower)
+                    .HasColumnName("follower")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.ModifiedOn)
+                    .HasColumnName("modified_on")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.PageUrl)
+                    .HasColumnName("page_url")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.RatingCount)
+                    .HasColumnName("rating_count")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.RatingValue)
+                    .HasColumnName("rating_value")
+                    .HasColumnType("decimal(3,2)");
+
+                entity.Property(e => e.ShopName)
+                    .IsRequired()
+                    .HasColumnName("shop_name")
+                    .HasColumnType("varchar(100)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.Status)
+                    .HasColumnName("status")
+                    .HasColumnType("tinyint(4)")
+                    .HasDefaultValueSql("'1'");
+
+                entity.HasOne(d => d.Channel)
+                    .WithMany(p => p.HqqCompetitorShop)
+                    .HasForeignKey(d => d.ChannelId)
+                    .HasConstraintName("channel_lnk_competitor_shop");
+            });
+
+            modelBuilder.Entity<HqqCpProductStatistic>(entity =>
+            {
+                entity.ToTable("hqq_cp_product_statistic");
+
+                entity.HasIndex(e => e.ProductId)
+                    .HasName("product_statistic_lnk_product_idx");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.Available)
+                    .HasColumnName("available")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.CreatedOn)
+                    .HasColumnName("created_on")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.LikeCount)
+                    .HasColumnName("like_count")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.Price)
+                    .HasColumnName("price")
+                    .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.PriceMovement)
+                    .HasColumnName("price_movement")
+                    .HasColumnType("decimal(10,2)");
+
+                entity.Property(e => e.PriceMovementPercentage)
+                    .HasColumnName("price_movement_percentage")
+                    .HasColumnType("decimal(3,2)");
+
+                entity.Property(e => e.ProductId)
+                    .HasColumnName("product_id")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.RatingCount)
+                    .HasColumnName("rating_count")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.RatingValue)
+                    .HasColumnName("rating_value")
+                    .HasColumnType("decimal(3,2)");
+
+                entity.Property(e => e.SaleHistory)
+                    .HasColumnName("sale_history")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.SaleMovement)
+                    .HasColumnName("sale_movement")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.SaleMovementPercentage)
+                    .HasColumnName("sale_movement_percentage")
+                    .HasColumnType("decimal(3,2)");
+
+                entity.Property(e => e.Status)
+                    .HasColumnName("status")
+                    .HasColumnType("tinyint(4)")
+                    .HasDefaultValueSql("'1'");
+
+                entity.Property(e => e.Stock)
+                    .HasColumnName("stock")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.StockMovement)
+                    .HasColumnName("stock_movement")
+                    .HasColumnType("int(11)");
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.HqqCpProductStatistic)
+                    .HasForeignKey(d => d.ProductId)
+                    .OnDelete(DeleteBehavior.ClientSetNull)
+                    .HasConstraintName("product_statistic_lnk_product");
             });
 
             modelBuilder.Entity<HqqDialogflow>(entity =>
@@ -364,6 +572,12 @@ namespace HQQLibrary.Model.Models.MaticonDB
             {
                 entity.ToTable("hqq_member_product");
 
+                entity.HasIndex(e => e.MemberId)
+                    .HasName("member_product_link_member_idx");
+
+                entity.HasIndex(e => e.ProductId)
+                    .HasName("member_product_lnk_product_idx");
+
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasColumnType("int(11)");
@@ -388,6 +602,16 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnName("status")
                     .HasColumnType("tinyint(4)")
                     .HasDefaultValueSql("'1'");
+
+                entity.HasOne(d => d.Member)
+                    .WithMany(p => p.HqqMemberProduct)
+                    .HasForeignKey(d => d.MemberId)
+                    .HasConstraintName("member_product_lnk_member");
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.HqqMemberProduct)
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("member_product_lnk_product");
             });
 
             modelBuilder.Entity<HqqMetaLocation>(entity =>
@@ -555,6 +779,9 @@ namespace HQQLibrary.Model.Models.MaticonDB
             {
                 entity.ToTable("hqq_product_faq");
 
+                entity.HasIndex(e => e.ProductId)
+                    .HasName("product_faq_lnk_product_idx");
+
                 entity.Property(e => e.Id)
                     .HasColumnName("id")
                     .HasColumnType("int(11)");
@@ -601,6 +828,11 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnName("status")
                     .HasColumnType("tinyint(4)")
                     .HasDefaultValueSql("'1'");
+
+                entity.HasOne(d => d.Product)
+                    .WithMany(p => p.HqqProductFaq)
+                    .HasForeignKey(d => d.ProductId)
+                    .HasConstraintName("product_faq_lnk_product");
             });
 
             modelBuilder.Entity<HqqProductImages>(entity =>

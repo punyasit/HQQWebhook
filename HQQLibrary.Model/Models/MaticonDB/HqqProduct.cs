@@ -9,7 +9,9 @@ namespace HQQLibrary.Model.Models.MaticonDB
         {
             HqqDialogflow = new HashSet<HqqDialogflow>();
             HqqDialogflowAddon = new HashSet<HqqDialogflowAddon>();
+            HqqMemberProduct = new HashSet<HqqMemberProduct>();
             HqqPrice = new HashSet<HqqPrice>();
+            HqqProductFaq = new HashSet<HqqProductFaq>();
             HqqProductImages = new HashSet<HqqProductImages>();
             HqqProductManual = new HashSet<HqqProductManual>();
             HqqProductReview = new HashSet<HqqProductReview>();
@@ -30,7 +32,9 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public virtual HqqCategory Category { get; set; }
         public virtual ICollection<HqqDialogflow> HqqDialogflow { get; set; }
         public virtual ICollection<HqqDialogflowAddon> HqqDialogflowAddon { get; set; }
+        public virtual ICollection<HqqMemberProduct> HqqMemberProduct { get; set; }
         public virtual ICollection<HqqPrice> HqqPrice { get; set; }
+        public virtual ICollection<HqqProductFaq> HqqProductFaq { get; set; }
         public virtual ICollection<HqqProductImages> HqqProductImages { get; set; }
         public virtual ICollection<HqqProductManual> HqqProductManual { get; set; }
         public virtual ICollection<HqqProductReview> HqqProductReview { get; set; }

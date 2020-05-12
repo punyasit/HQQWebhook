@@ -7,6 +7,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
     {
         public HqqSaleChannel()
         {
+            HqqCompetitorShop = new HashSet<HqqCompetitorShop>();
             HqqPrice = new HashSet<HqqPrice>();
         }
 
@@ -16,6 +17,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public string Url { get; set; }
         public sbyte Status { get; set; }
 
+        public virtual ICollection<HqqCompetitorShop> HqqCompetitorShop { get; set; }
         public virtual ICollection<HqqPrice> HqqPrice { get; set; }
     }
 }

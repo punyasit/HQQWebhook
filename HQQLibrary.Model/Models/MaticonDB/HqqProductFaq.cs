@@ -15,5 +15,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public DateTime? ModifiedOn { get; set; }
         public int? ModifiedBy { get; set; }
         public sbyte Status { get; set; }
+
+        public virtual HqqProduct Product { get; set; }
     }
 }

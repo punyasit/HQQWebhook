@@ -5,6 +5,11 @@ namespace HQQLibrary.Model.Models.MaticonDB
 {
     public partial class HqqMember
     {
+        public HqqMember()
+        {
+            HqqMemberProduct = new HashSet<HqqMemberProduct>();
+        }
+
         public int Id { get; set; }
         public string FacebookId { get; set; }
         public string Fullname { get; set; }
@@ -19,5 +24,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public DateTime CreatedOn { get; set; }
         public DateTime? ModifiedOn { get; set; }
         public sbyte Status { get; set; }
+
+        public virtual ICollection<HqqMemberProduct> HqqMemberProduct { get; set; }
     }
 }
