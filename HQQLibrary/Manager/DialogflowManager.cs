@@ -78,19 +78,20 @@ namespace HQQLibrary.Manager
             return GetDialogInfo(SearchType.Payload, payload);
         }
 
-        public List<PayloadResponse> GetDirectPayload(string payload)
+        public DirectPayloadResp GetDirectPayload(string payload)
         {
-            List<PayloadResponse> payloadResp = new List<PayloadResponse>();
+            DirectPayloadResp payloadResp = new DirectPayloadResp();
 
             var result = (from item in base.Context.HqqDialogflow
                           where item.Payload == payload
                           && item.FlowType == "introduction"
                           && item.Status == 1
-                          select item).ToList();
+                          select item).FirstOrDefault();
 
-            FillPayloadItems(result, payloadResp);
+            payloadResp = FillPayloadItems(result);
             return payloadResp;
         }
+
 
         private DialogflowInfo GetDialogInfo(SearchType searchType, string searchKey)
         {
@@ -194,8 +195,17 @@ namespace HQQLibrary.Manager
                     }
 
                     dialogFlowInfo.dialogType = DialogFlowType.Products;
-                    dialogFlowInfo.ResponseProducts = new List<HqqProduct>();
-                    dialogFlowInfo.ResponseProducts = productResult.ToList();
+                    dialogFlowInfo.ResponseProducts = new List<PayloadProduct>();
+                    foreach (var prItem in productResult)
+                    {
+                        var payload = lstDialogFlow.Where(item => item.ProductId == prItem.Id).FirstOrDefault().Payload;
+                        dialogFlowInfo.ResponseProducts.Add(new PayloadProduct()
+                        {
+                            Product = prItem,
+                            Payload = payload
+                        });
+                    }
+                    
                 }
             }
 
@@ -213,9 +223,40 @@ namespace HQQLibrary.Manager
                 payloadResp.Add(new PayloadResponse()
                 {   Id = item.Id,
                     Payload = item.Payload,
+                    ImageURL = item.PayloadImgUrl,
                     ResponseAnswer = lstRespWording
                 });;
             }
+        }
+
+        private DirectPayloadResp FillPayloadItems(HqqDialogflow dialogFlow)
+        {
+            List<string> lstRespWording = new List<string>();
+            List<string> lstRespHeader = new List<string>();
+            DirectPayloadResp result = new DirectPayloadResp();
+
+            if (!string.IsNullOrEmpty(dialogFlow.ResponseAnswer))
+            {
+                lstRespWording = dialogFlow.ResponseAnswer
+                    .Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                
+                if (!string.IsNullOrEmpty(dialogFlow.ResponseHeader))
+                {
+                     lstRespHeader = dialogFlow.ResponseHeader
+                       .Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+                }
+
+                result = new DirectPayloadResp()
+                {
+                    Id = dialogFlow.Id,
+                    Header = lstRespHeader,
+                    Payload = dialogFlow.Payload,                    
+                    ImageURL = dialogFlow.PayloadImgUrl,
+                    ResponseAnswer = lstRespWording
+                };
+            }
+
+            return result;
         }
     }
 
@@ -226,19 +267,34 @@ namespace HQQLibrary.Manager
         public DialogFlowType dialogType { get; set; }
         public List<string> ResponseHeader { get; set; }
         public List<PayloadResponse> PayloadResponses { get; set; }
-        public List<HqqProduct> ResponseProducts { get; set; }
+        public List<PayloadProduct> ResponseProducts { get; set; }
 
         public DialogflowInfo()
         {
             PayloadResponses = new List<PayloadResponse>();
-            ResponseProducts = new List<HqqProduct>();
+            ResponseProducts = new List<PayloadProduct>();
         }
+    }
+
+    public class PayloadProduct
+    {
+        public HqqProduct Product { get; set; }
+        public string Payload { get; set; }
     }
 
     public class PayloadResponse
     {
         public int Id { get; set; }
         public string Payload { get; set; }
+        public List<string> ResponseAnswer { get; set; }
+        public string ImageURL { get; set; }
+    }
+
+    public class DirectPayloadResp
+    {
+        public int Id { get; set; }
+        public string Payload { get; set; }
+        public List<string> Header { get; set; }
         public List<string> ResponseAnswer { get; set; }
         public string ImageURL { get; set; }
     }

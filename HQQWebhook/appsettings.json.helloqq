@@ -1,5 +1,5 @@
 ﻿{
-  "Version": "v0.6",
+  "Version": "v0.7",
   "Logging": {
     "IncludeScopes": false,
     "PathFormat": "Logs/qqlogs-{Date}.txt",
@@ -8,33 +8,40 @@
       "Default": "Debug",
       "Microsoft": "Information"
     },
-    "Debug": {
+    "Release": {
       "LogLevel": {
         "Default": "Warning"
+      },
+      "Debug": {
+        "LogLevel": {
+          "Default": "Warning"
+        }
+      },
+      "Console": {
+        "LogLevel": {
+          "Default": "Warning"
+        }
       }
     },
-    "Console": {
-      "LogLevel": {
-        "Default": "Warning"
-      }
+    "FbWebhookConfig": {
+      "AppId": "1854024371526354",
+      "AppSecret": "8d48345f13d95d6241ec511fbf04d1cd",
+      "PageId": "899463010162012",
+      "PageAccessToken": "EAAaWObAR2tIBAAKt7bR4K87Wlq4ck1djgfRuZBDbyinquvWkT5oPfa5sZCjCWUHGcr3tojDqTHC9eLhgfwRQOBdX4pKAmZCrtGnShSa7FOPaJCZBjLN4MYyvqVdbnkvC1Uiok1kMwBnZAvxeQiAYZCzYFAHee4yfU3O0SkHe9jFNwPczoMZC8IeRhU6MozayjcZD",
+      "ValidationToken": "TOKEN.QQ",
+      "ServerURL": "https://bec2e862.ngrok.io",
+      "FacebookAPI": "https://graph.facebook.com/v3.3",
+      "EnabledAutoMessage": "true",
+      "EnabledFeedResponse": "true"
+    },
+    "DialogFlow": {
+      "EndflowPayload": "HQQ_PL_ENDFLOW"
+    },
+    "ConnectionStrings": {
+      "DefaultConnection": "server=localhost;port=3306;user=root;password=M@ticon.2019;database=helloqqdb"
+    },
+    "StaticWording": {
+      "PurchaseFrom": "สั่งซื้อผ่าน "
     }
-  },
-  "FbWebhookConfig": {
-    "AppId": "1854024371526354",
-    "AppSecret": "8d48345f13d95d6241ec511fbf04d1cd",
-    "PageId": "899463010162012",
-    "PageAccessToken": "EAAaWObAR2tIBAAKt7bR4K87Wlq4ck1djgfRuZBDbyinquvWkT5oPfa5sZCjCWUHGcr3tojDqTHC9eLhgfwRQOBdX4pKAmZCrtGnShSa7FOPaJCZBjLN4MYyvqVdbnkvC1Uiok1kMwBnZAvxeQiAYZCzYFAHee4yfU3O0SkHe9jFNwPczoMZC8IeRhU6MozayjcZD",
-    "ValidationToken": "TOKEN.QQ",
-    "ServerURL": "https://bec2e862.ngrok.io",
-    "FacebookAPI": "https://graph.facebook.com/v3.3",
-    "EnabledAutoMessage": "true",
-    "EnabledFeedResponse": "true"
-  },
-  "DialogFlow": {
-    "EndflowPayload": "HQQ_PL_ENDFLOW"
-  },
-  "ConnectionStrings": {
-    "DefaultConnection": "server=localhost;port=3306;user=root;password=M@ticon.2019;database=helloqqdb"
-  }
 
-}
+  }

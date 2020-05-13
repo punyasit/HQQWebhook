@@ -20,10 +20,10 @@ namespace HQQWebhook.Manager
         // 231362101625904/ids_for_pages?page=899463010162012&access_token=1854024371526354|BW1kxATMkehNhsEJ3Wn15hOwFQQ
 
         private FbWebhookConfig fbConfig;
-        private ILogger<VersionController> logger;
+        private ILogger<WebHookController> logger;
 
         public FacebookAPIManager(FbWebhookConfig fbWebhook, 
-            ILogger<VersionController> log)
+            ILogger<WebHookController> log)
         {
             fbConfig = fbWebhook;
             this.logger = log;
@@ -40,7 +40,7 @@ namespace HQQWebhook.Manager
             {
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
-                    logger.LogInformation(ConstInfo.LOG_TRACE_PREFIX +
+                    logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
                        string.Format(" GetSPID, Ex: {0}, Source: {1}"
                        , response.ToString()
                        , userId)
@@ -91,7 +91,7 @@ namespace HQQWebhook.Manager
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
                     // #LOG : Error log
-                    logger.LogInformation(ConstInfo.LOG_TRACE_PREFIX +
+                    logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
                        string.Format(" CallSendAPI, Ex: {0}, Source: {1}"
                        , response.ToString()
                        , JsonConvert.SerializeObject((object)messageData))
@@ -113,7 +113,7 @@ namespace HQQWebhook.Manager
                 if (response.StatusCode != System.Net.HttpStatusCode.OK)
                 {
                     // #LOG : Error log
-                    logger.LogInformation(ConstInfo.LOG_TRACE_PREFIX +
+                    logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
                        string.Format(" ReplyComment, Ex: {0}, Source: {1}"
                        , response.ToString()
                        , JsonConvert.SerializeObject((object)commentId))

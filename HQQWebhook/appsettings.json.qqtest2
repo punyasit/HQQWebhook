@@ -1,16 +1,21 @@
 ﻿{
-  "Version": "v0.6",
+  "Version": "v0.7",
   "Logging": {
     "IncludeScopes": false,
     "PathFormat": "Logs/qqlogs-{Date}.txt",
-    "isJson": "isJson",
+    "isJson": "true",
     "LogLevel": {
-      "Default": "Debug",
+      "Default": "Information",
       "Microsoft": "Information"
+    },
+    "Release": {
+      "LogLevel": {
+        "Default": "Information"
+      }
     },
     "Debug": {
       "LogLevel": {
-        "Default": "Warning"
+        "Default": "Information"
       }
     },
     "Console": {
@@ -30,13 +35,14 @@
     "EnabledAutoMessage": "true",
     "EnabledFeedResponse": "true"
   },
-  },
   "DialogFlow": {
     "EndflowPayload": "HQQ_PL_ENDFLOW"
   },
   "ConnectionStrings": {
     "DefaultConnection": "server=localhost;port=3306;user=root;password=M@ticon.2019;database=helloqqdb"
+  },
+  "StaticWording": {
+    "PurchaseFrom": "สั่งซื้อผ่าน "
   }
-
 
 }

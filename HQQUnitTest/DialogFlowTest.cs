@@ -46,8 +46,10 @@ namespace HQQUnitTest
         public void D03_GetDirectPayload()
         {
             //DialogflowInfo result = dialogFlowMgr.GetDialogFromPayload("HQQ_PL_GPSWATCH");
-            var result = dialogFlowMgr.GetDirectPayload("HQQ_PL_ENDFLOW");
-            Assert.IsTrue(result.Count > 0 );
+            var result = dialogFlowMgr.GetDirectPayload("HQQ_PL_SX12PRO");
+            Assert.IsTrue(result.ResponseAnswer.Count>0);
         }
+
+
     }
 }

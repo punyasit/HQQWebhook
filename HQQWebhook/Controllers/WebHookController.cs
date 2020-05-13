@@ -38,25 +38,28 @@ namespace HQQWebhook.Controllers
     public class WebHookController : Controller
     {
         private readonly IConfiguration WebConfig;
-        private readonly ILogger<VersionController> logger;
+        private readonly ILogger<WebHookController> logger;
 
         private FacebookAPIManager fbAPIMgr;
         private FbWebhookConfig fbConfig = new FbWebhookConfig();
         private DialogflowManager dialogFlowMgr;
         private DialogflowInfo endFlowItem;
         private enum ReplyType { PrivateReply, MessageReply };
-        private PayloadResponse endflowPayload;
+        private DirectPayloadResp endflowPayload;
+        private string strPurchaseFrom;
 
-        public WebHookController(IConfiguration configuration, ILogger<VersionController> log)
+        public WebHookController(IConfiguration configuration, ILogger<WebHookController> log)
         {
             WebConfig = configuration;
             fbConfig = configuration.GetSection("FbWebhookConfig").Get<FbWebhookConfig>();
             var strEndflowPayload = configuration.GetSection("DialogFlow:EndflowPayload").Value;
+            strPurchaseFrom = configuration.GetSection("StaticWording:PurchaseFrom").Value;
 
             this.logger = log;
             fbAPIMgr = new FacebookAPIManager(fbConfig, logger);
             dialogFlowMgr = new DialogflowManager();
-            endflowPayload = dialogFlowMgr.GetDirectPayload(strEndflowPayload).FirstOrDefault();
+            endflowPayload = dialogFlowMgr.GetDirectPayload(strEndflowPayload);
+
         }
 
         /*
@@ -108,6 +111,10 @@ namespace HQQWebhook.Controllers
                             if (messagingEvent.message != null)
                             {
                                 receivedMessage(messagingEvent);
+                            }
+                            else if (messagingEvent.postback != null)
+                            {
+                                receivedPostback(messagingEvent);
                             }
 
                             //# OTHER MEESAGE TYPE #//
@@ -162,10 +169,127 @@ namespace HQQWebhook.Controllers
                         }
                     }
                 }
-
             }
 
             HttpContext.Response.StatusCode = 200;
+        }
+
+        private void receivedMessage(dynamic messagingEvent)
+        {
+            var senderID = messagingEvent.sender.id;
+            var message = messagingEvent.message;
+            string isEcho = message.is_echo;
+            string messageText = message.text;
+            string respHeader = string.Empty;
+
+            #region[UNUSED : MESSAGE TYPE THAT MAY BE USE IN THE FUTURE]
+            //var recipientID = messagingEvent.recipient.id;
+            //var timeOfMessage = messagingEvent.timestamp;
+            //string messageId = message.mid;
+            //string appId = message.app_id;
+            //string metadata = message.metadata;
+
+            //# USE FOR IMAGE CHECKING AND PROCESSING
+            //# You may get a text or attachment but not both
+            //# Try to get attachment.
+
+            //string messageAttachments = string.Empty;
+            //try
+            //{
+            //    messageAttachments = message.attachments;
+            //}
+            //catch (Exception)
+            //{
+            //}
+            #endregion
+
+            var quickReply = message.quick_reply;
+            if (isEcho != null)
+            {
+                // Just logging message echoes to console
+                //console.log("Received echo for message %s and app %d with metadata %s",
+                //messageId, appId, metadata);
+                return;
+            }
+            else if (quickReply != null)
+            {
+                var quickReplyPayload = quickReply.payload.ToString();
+
+                //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
+                DialogflowInfo dialogAnswer = dialogFlowMgr.GetDialogFromPayload(quickReplyPayload);
+
+                if (dialogAnswer.ResponseProducts != null
+                    && dialogAnswer.ResponseProducts.Count() > 0)
+                {
+                    respHeader = RandomAnswer(dialogAnswer.ResponseHeader);
+                    sendTypingOn(senderID);
+                    SendTextMessage(senderID, respHeader);
+                    sendTypingOff(senderID);
+                    SendMessageTemplate(senderID, dialogAnswer);
+                }
+
+                if (dialogAnswer.PayloadResponses != null
+                     && dialogAnswer.PayloadResponses.Count > 0)
+                {
+                    SendMessageQuickReply(ReplyType.MessageReply,
+                        senderID, respHeader,
+                        dialogAnswer.PayloadResponses);
+                }
+
+                return;
+            }
+
+            if (!string.IsNullOrEmpty(messageText))
+            {
+                // If we receive a text message, check to see if it matches any special
+                // keywords and send back the corresponding example. Otherwise, just echo
+                // the text we received.
+                Regex rgx = new Regex(@"/[^\w\s] / gi");
+                string keyword = rgx.Replace(messageText, "").Trim().ToLower();
+                var dialogAnswer = dialogFlowMgr.GetDialogFromKeyword(keyword);
+
+                if (dialogAnswer != null)
+                {
+                    SendMessageQuickReply(ReplyType.MessageReply,
+                          senderID, RandomAnswer(dialogAnswer.ResponseHeader), dialogAnswer.PayloadResponses);
+                }
+            }
+        }
+
+        private void receivedPostback(dynamic messagingEvent)
+        {
+            try
+            {
+                var senderID = messagingEvent.sender.id;
+                var postback = messagingEvent.postback;
+
+                if (messagingEvent.postback != null)
+                {
+                    var payload = postback.payload.ToString();
+
+                    //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
+                    DirectPayloadResp drctPayload = dialogFlowMgr.GetDirectPayload(payload);
+
+                    //# Send Header Message
+                    SendTextMessage(senderID, RandomAnswer(drctPayload.Header));
+
+                    //# Send Attachment 
+                    if (!string.IsNullOrEmpty(drctPayload.ImageURL))
+                    {
+                        SendImageMessage(senderID, drctPayload.ImageURL);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // #LOG : Error log
+                logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
+                   string.Format(" receivedPostback, Ex: {0}, Source: {1}"
+                   , ex.ToString()
+                   , JsonConvert.SerializeObject((object)messagingEvent))
+                   );
+            }
+            
         }
 
         private void recievedFeedAction(dynamic feedResponse)
@@ -221,7 +345,7 @@ namespace HQQWebhook.Controllers
                 }
                 catch (Exception ex)
                 {
-                    logger.LogInformation(ConstInfo.LOG_TRACE_PREFIX +
+                    logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
                         string.Format(" recievedFeedAction, Ex: {0}, Source: {1}"
                         , ex.Message
                         , JsonConvert.SerializeObject(feedResp))
@@ -265,95 +389,11 @@ namespace HQQWebhook.Controllers
             throw new NotImplementedException();
         }
 
-        private void receivedPostback(object messagingEvent)
-        {
-            throw new NotImplementedException();
-        }
-
         private void receivedDeliveryConfirmation(object messagingEvent)
         {
             throw new NotImplementedException();
         }
 
-        private void receivedMessage(dynamic messagingEvent)
-        {
-            var senderID = messagingEvent.sender.id;
-            var message = messagingEvent.message;
-            string isEcho = message.is_echo;
-            string messageText = message.text;
-            string respHeader = string.Empty;
-
-            #region[UNUSED : MESSAGE TYPE THAT MAY BE USE IN THE FUTURE]
-            //var recipientID = messagingEvent.recipient.id;
-            //var timeOfMessage = messagingEvent.timestamp;
-            //string messageId = message.mid;
-            //string appId = message.app_id;
-            //string metadata = message.metadata;
-
-            //# USE FOR IMAGE CHECKING AND PROCESSING
-            //# You may get a text or attachment but not both
-            //# Try to get attachment.
-
-            //string messageAttachments = string.Empty;
-            //try
-            //{
-            //    messageAttachments = message.attachments;
-            //}
-            //catch (Exception)
-            //{
-            //}
-            #endregion
-
-            var quickReply = message.quick_reply;
-            if (isEcho != null)
-            {
-                // Just logging message echoes to console
-                //console.log("Received echo for message %s and app %d with metadata %s",
-                //messageId, appId, metadata);
-                return;
-            }
-            else if (quickReply != null)
-            {
-                var quickReplyPayload = quickReply.payload.ToString();
-
-                //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
-                DialogflowInfo dialogAnswer = dialogFlowMgr.GetDialogFromPayload(quickReplyPayload);
-
-                if (dialogAnswer.ResponseProducts != null
-                    && dialogAnswer.ResponseProducts.Count() > 0)
-                {
-                    respHeader = RandomAnswer(dialogAnswer.ResponseHeader);
-                    SendTextMessage(senderID, respHeader);
-                    SendMessageTemplate(senderID, dialogAnswer.ResponseProducts);
-                }
-
-                if (dialogAnswer.PayloadResponses != null
-                     && dialogAnswer.PayloadResponses.Count > 0)
-                {
-                    SendMessageQuickReply(ReplyType.MessageReply,
-                        senderID, respHeader,
-                        dialogAnswer.PayloadResponses);
-                }
-
-                return;
-            }
-
-            if (!string.IsNullOrEmpty(messageText))
-            {
-                // If we receive a text message, check to see if it matches any special
-                // keywords and send back the corresponding example. Otherwise, just echo
-                // the text we received.
-                Regex rgx = new Regex(@"/[^\w\s] / gi");
-                string keyword = rgx.Replace(messageText, "").Trim().ToLower();
-                var dialogAnswer = dialogFlowMgr.GetDialogFromKeyword(keyword);
-
-                if (dialogAnswer != null)
-                {
-                    SendMessageQuickReply(ReplyType.MessageReply,
-                          senderID, RandomAnswer(dialogAnswer.ResponseHeader), dialogAnswer.PayloadResponses);
-                }
-            }
-        }
         private string RandomAnswer(List<string> lstAnswer)
         {
             return lstAnswer[new Random().Next(0, ((lstAnswer.Count() - 1) < 0 ? 0 : lstAnswer.Count()))];
@@ -468,15 +508,36 @@ namespace HQQWebhook.Controllers
             fbAPIMgr.CallSendAPI(messageData);
         }
 
+        private void SendTextMessage(dynamic recipientId, string messageText)
+        {
+            var messageData = new
+            {
+                recipient = new
+                {
+                    id = recipientId
+                },
+                message = new
+                {
+                    text = messageText,
+                    metadata = "HQQ_MESSAGE"
+                }
+            };
+
+            fbAPIMgr.CallSendAPI(messageData);
+        }
+
         private void SendMessageTemplate(
             dynamic recipientId,
-            List<HqqProduct> lstProduct)
+            DialogflowInfo dialogInfo)
         {
             MessageData msgData = new MessageData();
             Attachment attachment = new Attachment();
-            Payload payload = new Payload();
+
             List<Elements> lstElProduct = new List<Elements>();
             Elements elProduct = new Elements();
+
+            Payload payload = new Payload();
+            PayloadResponse payloadResp = null;
 
             msgData.recipient = new Recipient()
             {
@@ -487,20 +548,22 @@ namespace HQQWebhook.Controllers
             attachment.type = "template";
             payload.template_type = "generic";
 
-            foreach (var item in lstProduct)
+
+            foreach (var plProduct in dialogInfo.ResponseProducts)
             {
-                var hqqDefaultPrice = item.HqqPrice.Where(pi => pi.Channel.Name == "Facebook").FirstOrDefault();
-                var hqqOtherPrice = item.HqqPrice.Where(pi => pi.Channel.Name != "Facebook").ToList();
+                var product = plProduct.Product;
+                var hqqDefaultPrice = product.HqqPrice.Where(pi => pi.Channel.Name == "Facebook").FirstOrDefault();
+                var hqqOtherPrice = product.HqqPrice.Where(pi => pi.Channel.Name != "Facebook").ToList();
 
                 elProduct = new Elements()
                 {
-                    title = item.Name,
-                    image_url = item.PreviewImageUrl,
-                    subtitle = item.Description + string.Format(@"- ราคา:{0:n0}บาท", hqqDefaultPrice.Price),
+                    title = product.Name,
+                    image_url = product.PreviewImageUrl,
+                    subtitle = product.Description + string.Format(@"- ราคา:{0:n0}บาท", hqqDefaultPrice.Price),
                     default_action = new Default_action()
                     {
                         type = "web_url",
-                        url = item.InformationUrl,
+                        url = product.InformationUrl,
                         webview_height_ratio = "tall"
                     }
                 };
@@ -512,13 +575,14 @@ namespace HQQWebhook.Controllers
                     {
                         type = "web_url",
                         url = othrPrice.AffiliateUrl,
-                        title = othrPrice.Channel.Name
+                        title = strPurchaseFrom + othrPrice.Channel.Name
                     });
                 }
 
-                if(item.HqqDialogflowAddon != null
-                    &&item.HqqDialogflowAddon.ToList().Count > 0){
-                    foreach (var hdfa in item.HqqDialogflowAddon.ToList())
+                if (product.HqqDialogflowAddon != null
+                    && product.HqqDialogflowAddon.ToList().Count > 0)
+                {
+                    foreach (var hdfa in product.HqqDialogflowAddon.ToList())
                     {
                         buttons.Add(new Buttons()
                         {
@@ -533,7 +597,7 @@ namespace HQQWebhook.Controllers
                 {
                     type = "postback",
                     title = RandomAnswer(endflowPayload.ResponseAnswer),
-                    payload = endflowPayload.Payload
+                    payload = (!string.IsNullOrEmpty(plProduct.Payload)? plProduct.Payload : endflowPayload.Payload)
                 });
 
                 elProduct.buttons = buttons;
@@ -547,7 +611,7 @@ namespace HQQWebhook.Controllers
             fbAPIMgr.CallSendAPI(msgData);
         }
 
-        private void sendImageMessage(dynamic recipientId)
+        private void SendImageMessage(dynamic recipientId, string imageUrl)
         {
             var messageData = new
             {
@@ -564,7 +628,7 @@ namespace HQQWebhook.Controllers
                     payload =
                     new
                     {
-                        url = fbConfig.ServerURL + "/assets/rift.png"
+                        url = imageUrl
                     }
                 }
                 }
@@ -668,24 +732,6 @@ namespace HQQWebhook.Controllers
             // When an authentication is received, we'll send a message back to the sender
             // to let them know it was successful.
             SendTextMessage(senderID, "Authentication successful");
-        }
-
-        private void SendTextMessage(dynamic recipientId, string messageText)
-        {
-            var messageData = new
-            {
-                recipient = new
-                {
-                    id = recipientId
-                },
-                message = new
-                {
-                    text = messageText,
-                    metadata = "DEVELOPER_DEFINED_METADATA"
-                }
-            };
-
-            fbAPIMgr.CallSendAPI(messageData);
         }
 
         private void ReplyComment(FbFeedResponse fResp, string replyMessage)

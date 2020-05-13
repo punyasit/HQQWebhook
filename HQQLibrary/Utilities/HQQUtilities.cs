@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 
 namespace HQQLibrary.Utilities
 {
-    public class Utilities
+    public class HQQUtilities
     {
         public enum HMACCoding { SHA256, SHA512 };
         public static string HashHmac(HMACCoding encode, string message, string secret)
@@ -41,6 +43,17 @@ namespace HQQLibrary.Utilities
 
             return result;
 
+        }
+
+        public static string AssemblyDirectory
+        {
+            get
+            {
+                string codeBase = Assembly.GetExecutingAssembly().CodeBase;
+                UriBuilder uri = new UriBuilder(codeBase);
+                string path = Uri.UnescapeDataString(uri.Path);
+                return Path.GetDirectoryName(path);
+            }
         }
     }
 }
