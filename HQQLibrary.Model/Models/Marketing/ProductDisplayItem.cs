@@ -31,6 +31,8 @@ namespace HQQLibrary.Model.Models.Marketing
     {
         public string Type { get; set; }
         public string Price { get; set; }
+        public string LowPrice { get; set; }
+        public string HighPrice { get; set; }
         public string PriceCurrency { get; set; }
         public Uri Availability { get; set; }
     }

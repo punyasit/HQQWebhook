@@ -35,7 +35,7 @@ namespace HQQLibrary.Manager.Tests
         }
 
         [TestMethod()]
-        public void GetDocumentNodesTest()
+        public void WS01_GetDocumentNodesTest()
         {
             List<HtmlNode> lstNode = wsMgr.GetDocumentNodes(@"(//div[contains(@class,'shop-search-result-view__item col-xs-2-4')]");
             Assert.IsTrue(lstNode.Count > 0);
@@ -43,64 +43,13 @@ namespace HQQLibrary.Manager.Tests
         //# Get element from selenium https://stackoverflow.com/questions/23587862/how-to-get-all-elements-into-list-or-string-with-selenium-using-c
 
         [TestMethod]
-        public void ChromeDriverTest()
+        public void WS02_ExecuteGatherShopInfoTest()
         {
-            LoadDataResult();
+            wsMgr.ExecuteGatherShopInfo();
             Assert.IsTrue(true);
         }
 
-        public void LoadDataResult()
-        {
-            //# CANNOT LOADED
-            //string url = "https://shopee.co.th/api/v2/search_items/?by=pop&limit=30&match_id=3315055&newest=0&order=desc&page_type=shop&version=2";
-            //var jsonRqstTask = url.GetStringAsync();
-            //jsonRqstTask.Wait();
-            //string jsonResult = jsonRqstTask.Result;
-
-            string strJsonObj = string.Empty;
-            string strProductItem = string.Empty;
-
-            var chromeOptions = new ChromeOptions();
-            chromeOptions.AddArguments("headless");
-
-            using (var driver = new ChromeDriver(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), chromeOptions))
-            {
-                try
-                {
-
-                    driver.Navigate().GoToUrl(@"https://shopee.co.th/api/v2/search_items/?by=pop&limit=30&match_id=3315055&newest=0&order=desc&page_type=shop&version=2");
-                    driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(7);
-                    var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-                    var result = wait.Until(ExpectedConditions.ElementExists(By.TagName("pre")));
-                    strJsonObj = driver.FindElementByTagName("pre").GetAttribute("innerHTML");
-
-                    //File.WriteAllText(this.AssemblyDirectory + "/dummy-overalljson.txt",strJsonObj);
-
-                    strJsonObj = File.ReadAllText(HQQUtilities.AssemblyDirectory + "/dummy-overalljson.txt");
-
-                    //driver.Navigate().GoToUrl(@"https://shopee.co.th/shop/3315055/search");
-                    //driver.Manage().Timeouts().ImplicitWait = TimeSpan.FromSeconds(7);
-                    //var wait = new WebDriverWait(driver, TimeSpan.FromSeconds(10));
-                    //var result = wait.Until(ExpectedConditions.ElementExists(By.ClassName("shop-search-result-view__item")));
-                    //var headerHTML = driver.FindElementByTagName("head").GetAttribute("innerHTML");
-
-                    strProductItem = File.ReadAllText(HQQUtilities.AssemblyDirectory + "/dummy-htmlfile.txt");
-
-                }
-                catch (Exception ex)
-                {
-
-                }
-                finally
-                {
-                    driver.Close();
-                    driver.Quit();
-                }
-            }
-
-            wsMgr.ExtractProductData(new HqqCompetitorShop(),strJsonObj, strProductItem);
-
-        }
+       
 
        
 

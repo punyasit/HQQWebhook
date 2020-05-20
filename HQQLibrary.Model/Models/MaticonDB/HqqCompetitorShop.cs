@@ -13,12 +13,12 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public int Id { get; set; }
         public int? ChannelId { get; set; }
         public string ShopName { get; set; }
+        public string ShopId { get; set; }
         public string Description { get; set; }
         public int Follower { get; set; }
         public long? RatingCount { get; set; }
         public decimal? RatingValue { get; set; }
-        public string DataUrl { get; set; }
-        public string PageUrl { get; set; }
+        public int RunPageNo { get; set; }
         public DateTime CreatedOn { get; set; }
         public DateTime? ModifiedOn { get; set; }
         public sbyte Status { get; set; }

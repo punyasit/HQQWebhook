@@ -40,6 +40,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseMySql(new AppConfiguration().ConnectionString, x => x.ServerVersion("5.6.40-mysql"));
+
             }
         }
 
@@ -109,10 +110,11 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnType("datetime");
 
                 entity.Property(e => e.ProductName)
+                    .IsRequired()
                     .HasColumnName("product_name")
                     .HasColumnType("varchar(255)")
-                    .HasCharSet("utf8")
-                    .HasCollation("utf8_general_ci");
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_general_ci");
 
                 entity.Property(e => e.ProductRefId)
                     .HasColumnName("product_ref_id")
@@ -153,12 +155,6 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnName("created_on")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.DataUrl)
-                    .HasColumnName("data_url")
-                    .HasColumnType("varchar(255)")
-                    .HasCharSet("utf8")
-                    .HasCollation("utf8_general_ci");
-
                 entity.Property(e => e.Description)
                     .HasColumnName("description")
                     .HasColumnType("varchar(255)")
@@ -173,12 +169,6 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnName("modified_on")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.PageUrl)
-                    .HasColumnName("page_url")
-                    .HasColumnType("varchar(255)")
-                    .HasCharSet("utf8")
-                    .HasCollation("utf8_general_ci");
-
                 entity.Property(e => e.RatingCount)
                     .HasColumnName("rating_count")
                     .HasColumnType("bigint(20)");
@@ -186,6 +176,18 @@ namespace HQQLibrary.Model.Models.MaticonDB
                 entity.Property(e => e.RatingValue)
                     .HasColumnName("rating_value")
                     .HasColumnType("decimal(3,2)");
+
+                entity.Property(e => e.RunPageNo)
+                    .HasColumnName("run_page_no")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'1'");
+
+                entity.Property(e => e.ShopId)
+                    .IsRequired()
+                    .HasColumnName("shop_id")
+                    .HasColumnType("varchar(30)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
 
                 entity.Property(e => e.ShopName)
                     .IsRequired()
@@ -224,21 +226,35 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnName("created_on")
                     .HasColumnType("datetime");
 
-                entity.Property(e => e.LikeCount)
-                    .HasColumnName("like_count")
-                    .HasColumnType("bigint(20)");
+                entity.Property(e => e.LikedCount)
+                    .HasColumnName("liked_count")
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.LikedMovement)
+                    .HasColumnName("liked_movement")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.LikedPercentage)
+                    .HasColumnName("liked_percentage")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.Property(e => e.Price)
                     .HasColumnName("price")
-                    .HasColumnType("decimal(10,2)");
+                    .HasColumnType("decimal(10,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.Property(e => e.PriceMovement)
                     .HasColumnName("price_movement")
-                    .HasColumnType("decimal(10,2)");
+                    .HasColumnType("decimal(10,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.Property(e => e.PriceMovementPercentage)
                     .HasColumnName("price_movement_percentage")
-                    .HasColumnType("decimal(3,2)");
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.Property(e => e.ProductId)
                     .HasColumnName("product_id")
@@ -246,23 +262,28 @@ namespace HQQLibrary.Model.Models.MaticonDB
 
                 entity.Property(e => e.RatingCount)
                     .HasColumnName("rating_count")
-                    .HasColumnType("bigint(20)");
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
 
                 entity.Property(e => e.RatingValue)
                     .HasColumnName("rating_value")
-                    .HasColumnType("decimal(3,2)");
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.Property(e => e.SaleHistory)
                     .HasColumnName("sale_history")
-                    .HasColumnType("bigint(20)");
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
 
                 entity.Property(e => e.SaleMovement)
                     .HasColumnName("sale_movement")
-                    .HasColumnType("int(11)");
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
 
                 entity.Property(e => e.SaleMovementPercentage)
                     .HasColumnName("sale_movement_percentage")
-                    .HasColumnType("decimal(3,2)");
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.Property(e => e.Status)
                     .HasColumnName("status")
@@ -271,11 +292,18 @@ namespace HQQLibrary.Model.Models.MaticonDB
 
                 entity.Property(e => e.Stock)
                     .HasColumnName("stock")
-                    .HasColumnType("bigint(20)");
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
 
                 entity.Property(e => e.StockMovement)
                     .HasColumnName("stock_movement")
-                    .HasColumnType("int(11)");
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.StockMovementPercentage)
+                    .HasColumnName("stock_movement_percentage")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
 
                 entity.HasOne(d => d.Product)
                     .WithMany(p => p.HqqCpProductStatistic)
