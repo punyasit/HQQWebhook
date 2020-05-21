@@ -31,7 +31,7 @@ namespace HQQLibrary.Manager.Tests
 
         private void InitVariable()
         {
-            wsMgr = new ShopeeDataExtraction("https://shopee.co.th/shop/3315055/search?page=0&sortBy=pop");
+            wsMgr = new ShopeeDataExtraction();
         }
 
         [TestMethod()]

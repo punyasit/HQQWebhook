@@ -9,7 +9,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HQQLibrary", "HQQLibrary\HQ
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HQQUnitTest", "HQQUnitTest\HQQUnitTest.csproj", "{AD3EDAE9-2DB4-46F4-B3D6-381471D95D4F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HQQLibrary.Model", "HQQLibrary.Model\HQQLibrary.Model.csproj", "{DE7AA091-A8B5-4026-8CC8-C228843FB41D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "HQQLibrary.Model", "HQQLibrary.Model\HQQLibrary.Model.csproj", "{DE7AA091-A8B5-4026-8CC8-C228843FB41D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "HQQMScheduler", "HQQMScheduler\HQQMScheduler.csproj", "{6E7FBDF5-4990-4CD4-A5CB-0EE640767B5E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -33,6 +35,10 @@ Global
 		{DE7AA091-A8B5-4026-8CC8-C228843FB41D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DE7AA091-A8B5-4026-8CC8-C228843FB41D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DE7AA091-A8B5-4026-8CC8-C228843FB41D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E7FBDF5-4990-4CD4-A5CB-0EE640767B5E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E7FBDF5-4990-4CD4-A5CB-0EE640767B5E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E7FBDF5-4990-4CD4-A5CB-0EE640767B5E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E7FBDF5-4990-4CD4-A5CB-0EE640767B5E}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
