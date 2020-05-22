@@ -14,6 +14,7 @@ using HQQLibrary.Model.Models.MaticonDB;
 using HQQLibrary.Model.Utilities;
 using HQQLibrary.Utilities;
 using HtmlAgilityPack;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Newtonsoft.Json;
 using OpenQA.Selenium;
@@ -43,7 +44,6 @@ namespace HQQLibrary.Manager
         {
             InitVariable();
         }
-
         public void InitVariable()
         {
             IConfiguration appConfig = new ConfigurationBuilder()
@@ -101,6 +101,7 @@ namespace HQQLibrary.Manager
                .Where(item => item.Status == 1)
                .ToList();
 
+            startTime = DateTime.Now;
             Log.Information("Start Process Start Time: {0:dd:MM:yyyy HH:mm:ss}", startTime); 
             Log.Information("Get Shop Information, {0}", lstCompeteShop.Count);
 
@@ -110,7 +111,6 @@ namespace HQQLibrary.Manager
                 {
                     ///#DEBUG 
                     // cpShopItem.RunPageNo = 1;
-
                     for (int iPage = 0; iPage < cpShopItem.RunPageNo; iPage++)
                     {
                         try
@@ -170,20 +170,14 @@ namespace HQQLibrary.Manager
                                 }
 
                             }
-
                             //strPageData = File.ReadAllText(HQQUtilities.AssemblyDirectory + "/dummy-htmlfile.txt");
-
                         }
                         catch (Exception ex)
                         {
                             string strEx = ex.ToString();
 
                         }
-                        finally
-                        {
-
-                        }
-
+                       
                         Log.Information("Start extract product information, {0} records", lstprdPageItem.Count);
 
                         this.ExtractProductData(cpShopItem, strProductData, strPageData, lstprdPageItem);
@@ -206,30 +200,47 @@ namespace HQQLibrary.Manager
             prdPageItem.ProductId = (long.Parse(prdPageItem.URL.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last()));
 
             //#FIND AMOUNT IF AMOUNT < 1000 THEN COlLECT TO STATISTIC
-            var tmpPrice = item.FindElement(By.XPath("//a/div/div[2]/div[3]/div[3]"));
+            var tmpPrice = item.FindElement(By.XPath("div/a/div/div[2]/div[3]/div[3]"));
             if (tmpPrice != null)
             {
-                strConvertPrice = tmpPrice.Text.Replace("ขายแล้ว ", "").Replace(" ชิ้น", "");
-                if (strConvertPrice.Contains("พัน"))
+                if (string.IsNullOrEmpty(tmpPrice.Text))
                 {
-                    strConvertPrice = strConvertPrice.Replace("พัน", "");
-                    var converted = Convert.ToDecimal(strConvertPrice);
-                    deConvertPrice = (int)(converted * 1000);
-                }
-                else if (strConvertPrice.Contains("หมื่น"))
-                {
-                    strConvertPrice = strConvertPrice.Replace("หมื่น", "");
-                    var converted = Convert.ToDecimal(strConvertPrice);
-                    deConvertPrice = (int)(deConvertPrice * 10000);
+                    strConvertPrice = tmpPrice.GetAttribute("innerHTML");
                 }
                 else
                 {
-                    deConvertPrice = Convert.ToInt32(strConvertPrice);
+                    strConvertPrice = tmpPrice.Text;
+                }
+
+                strConvertPrice = strConvertPrice.Replace("ขายแล้ว ", "").Replace(" ชิ้น", "");
+                if (!string.IsNullOrEmpty(strConvertPrice))
+                {
+                    if (strConvertPrice.Contains("พัน"))
+                    {
+                        strConvertPrice = strConvertPrice.Replace("พัน", "");
+                        var converted = Convert.ToDecimal(strConvertPrice);
+                        deConvertPrice = (int)(converted * 1000);
+                    }
+                    else if (strConvertPrice.Contains("หมื่น"))
+                    {
+                        strConvertPrice = strConvertPrice.Replace("หมื่น", "");
+                        var converted = Convert.ToDecimal(strConvertPrice);
+                        deConvertPrice = (int)(deConvertPrice * 10000);
+                    }
+                    else
+                    {
+                        deConvertPrice = Convert.ToInt32(strConvertPrice);
+                    }
+                }
+                else
+                {
+                    deConvertPrice = 0;
                 }
             }
             else
             {
                 deConvertPrice = 0;
+                Log.Error("Cannot Convert Sold Amount from product Id: {0}", prdPageItem.ProductId);
             }
 
             if (deConvertPrice < 1000)
@@ -238,8 +249,6 @@ namespace HQQLibrary.Manager
                 lstprdPageItem.Add(prdPageItem);
             }
 
-            prdPageItem.Sold = deConvertPrice;
-            lstprdPageItem.Add(prdPageItem);
             return prdPageItem;
         }
 
@@ -380,6 +389,7 @@ namespace HQQLibrary.Manager
                     cProductInfo.ProductRefId = productInfo.ProductId;
                     cProductInfo.ProductName = productInfo.Name;
                     cProductInfo.ImageUrl = productInfo.Image.ToString();
+                    cProductInfo.IsNew = 1;
                     cProductInfo.CreatedOn = DateTime.Now;
                     cProductInfo.Status = 1;
 
@@ -389,6 +399,7 @@ namespace HQQLibrary.Manager
                 {
                     cProductInfo.ProductName = productInfo.Name;
                     cProductInfo.ImageUrl = productInfo.Image.ToString();
+                    cProductInfo.IsNew = 0;
                     cProductInfo.ModifiedOn = DateTime.Now;
                     cProductInfo.Status = 1;
                 }
@@ -396,20 +407,24 @@ namespace HQQLibrary.Manager
                 //# 3.Insert Product Statistic
                 var existPrdStatistic = lstExistingPrdStatistic.Where(item => item.ProductId == cProductInfo.Id).FirstOrDefault();
                 var prdPageItem = lstprdPageItem.Where(item => item.ProductId == productInfo.ProductId).FirstOrDefault();
-                productStatistic = ExtractStatistic(productInfo, prdPageItem, existPrdStatistic);
 
-                if (cProductInfo.Id == 0)
+                if (prdPageItem != null)
                 {
-                    cProductInfo.HqqCpProductStatistic.Add(productStatistic);
-                    this.Context.HqqCompetitorProduct
-                        .Add(cProductInfo);
-                }
-                else
-                {
-                    productStatistic.ProductId = cProductInfo.Id;
-                    this.Context.HqqCompetitorShop.Attach(hqqCShop);
-                    this.Context.HqqCompetitorProduct.Attach(cProductInfo);
-                    this.Context.HqqCpProductStatistic.Add(productStatistic);
+                    productStatistic = ExtractStatistic(productInfo, prdPageItem, existPrdStatistic);
+
+                    if (cProductInfo.Id == 0)
+                    {
+                        cProductInfo.HqqCpProductStatistic.Add(productStatistic);
+                        this.Context.HqqCompetitorProduct
+                            .Add(cProductInfo);
+                    }
+                    else
+                    {
+                        productStatistic.ProductId = cProductInfo.Id;
+                        this.Context.HqqCompetitorShop.Attach(hqqCShop);
+                        this.Context.HqqCompetitorProduct.Attach(cProductInfo);
+                        this.Context.HqqCpProductStatistic.Add(productStatistic);
+                    }
                 }
 
                 Log.Information("Save Product: {0}", productInfo.Name);
@@ -520,6 +535,35 @@ namespace HQQLibrary.Manager
             }
 
             return productStatistic;
+        }
+
+        public enum TPOrder { StockMovement, SaleMovement};
+        public List<HqqvTopPurchaseProduct> GetTopProductInfo(TPOrder tpOrder, int limit)
+        {
+            List<HqqvTopPurchaseProduct> result = new List<HqqvTopPurchaseProduct>();
+
+            switch (tpOrder)
+            {
+                case TPOrder.StockMovement:
+
+                    result = Context.HqqvTopPurchaseProduct
+                        .OrderBy(item => item.StockMovement)
+                        .Take(limit)
+                        .ToList();
+
+                    break;
+                case TPOrder.SaleMovement:
+
+                    result = Context.HqqvTopPurchaseProduct
+                        .OrderBy(item => item.SaleMovement)
+                        .Take(limit)
+                        .ToList();
+
+                    break;
+            }
+
+            
+            return result;
         }
     }
 

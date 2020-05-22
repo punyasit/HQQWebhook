@@ -34,7 +34,7 @@ namespace HQQLibrary.Manager.Tests
             wsMgr = new ShopeeDataExtraction();
         }
 
-        [TestMethod()]
+       // [TestMethod()]
         public void WS01_GetDocumentNodesTest()
         {
             List<HtmlNode> lstNode = wsMgr.GetDocumentNodes(@"(//div[contains(@class,'shop-search-result-view__item col-xs-2-4')]");
@@ -49,9 +49,17 @@ namespace HQQLibrary.Manager.Tests
             Assert.IsTrue(true);
         }
 
-       
+        [TestMethod]
+        public void WS03_ExecuteGatherShopInfoTest()
+        {
+            int limit = 10;
+            var result = wsMgr.GetTopProductInfo(ShopeeDataExtraction.TPOrder.StockMovement, limit);
+            Assert.IsTrue(result.Count == limit);
+        }
 
-       
+
+
+
 
 
     }

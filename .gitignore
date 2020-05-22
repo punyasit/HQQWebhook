@@ -22,3 +22,6 @@
 /HQQLibrary/obj/Release/netcoreapp2.2
 /HQQLibrary.Model/bin/Release/netcoreapp2.2
 /HQQLibrary/bin/Release/netcoreapp2.2
+/HQQMScheduler/bin
+/HQQMScheduler/obj
+/HQQMScheduler/Properties/PublishProfiles

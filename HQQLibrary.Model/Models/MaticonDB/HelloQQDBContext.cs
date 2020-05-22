@@ -34,13 +34,13 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public virtual DbSet<HqqProductManual> HqqProductManual { get; set; }
         public virtual DbSet<HqqProductReview> HqqProductReview { get; set; }
         public virtual DbSet<HqqSaleChannel> HqqSaleChannel { get; set; }
+        public virtual DbSet<HqqvTopPurchaseProduct> HqqvTopPurchaseProduct { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
                 optionsBuilder.UseMySql(new AppConfiguration().ConnectionString, x => x.ServerVersion("5.6.40-mysql"));
-
             }
         }
 
@@ -1076,6 +1076,126 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnType("varchar(100)")
                     .HasCharSet("utf8")
                     .HasCollation("utf8_general_ci");
+            });
+
+            modelBuilder.Entity<HqqvTopPurchaseProduct>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("hqqv_top_purchase_product");
+
+                entity.Property(e => e.Available)
+                    .HasColumnName("available")
+                    .HasColumnType("int(11)");
+
+                entity.Property(e => e.CreatedOn)
+                    .HasColumnName("created_on")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.Id)
+                    .HasColumnName("id")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.ImageUrl)
+                    .HasColumnName("image_url")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.IsNew)
+                    .HasColumnName("is_new")
+                    .HasColumnType("tinyint(4)");
+
+                entity.Property(e => e.LikedCount)
+                    .HasColumnName("liked_count")
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.LikedMovement)
+                    .HasColumnName("liked_movement")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.LikedPercentage)
+                    .HasColumnName("liked_percentage")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
+
+                entity.Property(e => e.Price)
+                    .HasColumnName("price")
+                    .HasColumnType("decimal(10,2)")
+                    .HasDefaultValueSql("'0.00'");
+
+                entity.Property(e => e.PriceMovement)
+                    .HasColumnName("price_movement")
+                    .HasColumnType("decimal(10,2)")
+                    .HasDefaultValueSql("'0.00'");
+
+                entity.Property(e => e.PriceMovementPercentage)
+                    .HasColumnName("price_movement_percentage")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
+
+                entity.Property(e => e.ProductId)
+                    .HasColumnName("product_id")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.ProductRefId)
+                    .HasColumnName("product_ref_id")
+                    .HasColumnType("bigint(20)");
+
+                entity.Property(e => e.RatingCount)
+                    .HasColumnName("rating_count")
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.RatingValue)
+                    .HasColumnName("rating_value")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
+
+                entity.Property(e => e.SaleHistory)
+                    .HasColumnName("sale_history")
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.SaleMovement)
+                    .HasColumnName("sale_movement")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.SaleMovementPercentage)
+                    .HasColumnName("sale_movement_percentage")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
+
+                entity.Property(e => e.ShopId)
+                    .HasColumnName("shop_id")
+                    .HasColumnType("varchar(30)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.ShopName)
+                    .HasColumnName("shop_name")
+                    .HasColumnType("varchar(100)")
+                    .HasCharSet("utf8")
+                    .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.Stock)
+                    .HasColumnName("stock")
+                    .HasColumnType("bigint(20)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.StockMovement)
+                    .HasColumnName("stock_movement")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
+
+                entity.Property(e => e.StockMovementPercentage)
+                    .HasColumnName("stock_movement_percentage")
+                    .HasColumnType("decimal(6,2)")
+                    .HasDefaultValueSql("'0.00'");
             });
 
             OnModelCreatingPartial(modelBuilder);
