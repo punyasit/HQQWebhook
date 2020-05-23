@@ -1,0 +1,90 @@
+﻿
+@page "/interestPChart"
+
+<h3>Interest Top 5 Product Chart</h3>
+
+<Button Clicked="@(async () => await HandleRedraw())">Redraw</Button>
+<LineChart @ref="lineChart" TItem="double" />
+
+@code{
+    LineChart<double> lineChart;
+    int chartStep = 10;
+    List<string> Labels = new List<string>();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            this.GenerateLabel(1, chartStep, 1);
+            await HandleRedraw();
+        }
+    }
+
+    async Task HandleRedraw()
+    {
+        await lineChart.Clear();
+        await lineChart.AddLabel(Labels.ToArray());
+        await lineChart.AddDataSet(GetLineChartDataset());
+        await lineChart.AddDataSet(GetLineChartDataset2());
+
+        await lineChart.Update();
+    }
+
+    private void GenerateLabel(int start, int max, int step)
+    {
+        Labels = new List<string>();
+        //{ "Red", "Blue", "Yellow", "Green", "Purple", "Orange" };
+
+        var difference = max - start;
+        var stepGap = difference / step;
+
+        for(int i = start; i <= stepGap; i += step)
+        {
+            Labels.Add(i.ToString());
+        }
+    }
+
+    LineChartDataset<double> GetLineChartDataset()
+    {
+        return new LineChartDataset<double>
+        {
+            Label = "# of randoms",
+            Data = RandomizeData(),
+            BackgroundColor = new List<string> { ChartColor.FromRgba(65, 175, 25, 1f) },
+            BorderColor = new List<string> { ChartColor.FromRgba(65, 175, 25, 1f) },
+            Fill = false,
+            PointRadius = 1,
+            BorderDash = new List<int> { }
+        };
+    }
+
+    LineChartDataset<double> GetLineChartDataset2()
+    {
+        return new LineChartDataset<double>
+        {
+            Label = "#2 of randoms",
+            Data = RandomizeData(),
+            BackgroundColor = backgroundColors,
+            BorderColor = borderColors,
+            Fill = false,
+            PointRadius = 1,
+            BorderDash = new List<int> { }
+        };
+    }
+
+    List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f) };
+    List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
+
+    List<double> RandomizeData()
+    {
+        List<double> lstPoint = new List<double>();
+        var r = new Random(DateTime.Now.Millisecond);
+        for(int i = 0; i < chartStep; i++)
+        {
+            lstPoint.Add(r.NextDouble() * 100);
+        }
+
+        return lstPoint;
+    }
+
+}

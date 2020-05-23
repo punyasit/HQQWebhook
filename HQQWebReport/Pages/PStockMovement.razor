@@ -1,0 +1,109 @@
+﻿
+@page "/pStockMovement"
+
+@using HQQLibrary.Manager
+@using HQQLibrary.Model
+@using HQQLibrary.Model.Models.MaticonDB;
+@using HQQWebReport.Data
+
+@inject WebReportSettings webReportSettings
+
+<h1>สินค้าน่าสนใจเรียงตามลำดับจากยอดสั่งซื้อ </h1>
+<p>เรียงตามความน่าสนใจจาก Stock Percentage (%)</p>
+
+@if (cProducts == null || cProducts.Count == 0)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    //https://blazorise.com/docs/components/table/
+    <Table class="table products" Hoverable="true" Narrow="true">
+        <TableHeader ThemeContrast="ThemeContrast.Dark">
+            <TableRow>
+                <TableHeaderCell>No.</TableHeaderCell>
+                <TableHeaderCell>ชื่อร้าน</TableHeaderCell>
+                @*<TableHeaderCell>หมายเลขสินค้า</TableHeaderCell>*@
+                <TableHeaderCell>ชื่อสินค้า</TableHeaderCell>
+
+                <TableHeaderCell Class="action" Clicked="ToggleImage">รูปภาพ</TableHeaderCell>
+                <TableHeaderCell>มาใหม่</TableHeaderCell>
+
+                <TableHeaderCell>ขายแล้ว</TableHeaderCell>
+                <TableHeaderCell>สต๊อคปัจจุบัน</TableHeaderCell>
+                <TableHeaderCell>ขายแล้ววานนี้</TableHeaderCell>
+                <TableHeaderCell>ความเคลื่อนไหว(%)</TableHeaderCell>
+
+                <TableHeaderCell>ราคา</TableHeaderCell>
+                <TableHeaderCell>ความเคลื่อนไหว</TableHeaderCell>
+
+                <TableHeaderCell>จำนวนเรทติ้ง</TableHeaderCell>
+                <TableHeaderCell>เรทติ้ง</TableHeaderCell>
+
+                <TableHeaderCell>ยอดไลค์</TableHeaderCell>
+                <TableHeaderCell>เปลี่ยนแปลง</TableHeaderCell>
+                @*<TableHeaderCell>% เปลี่ยนแปลง</TableHeaderCell>*@
+
+            </TableRow>
+        </TableHeader>
+        <TableBody>
+            @foreach (var item in cProducts)
+            {
+            <TableRow>
+                <TableRowCell>@(iRowNum++)</TableRowCell>
+                <TableRowCell>@item.ShopName</TableRowCell>
+                @*<TableRowCell>@item.ProductRefId</TableRowCell>*@
+                <TableRowCell><Tooltip Text="@(item.Name)">@(item.Name.Length > 15 ? item.Name.Substring(0, 15) : item.Name)</Tooltip></TableRowCell>
+
+                @if (iShowImage)
+                    {
+                <TableRowCell><img class="img-preview" style="text-align:center;" src="@item.ImageUrl" /></TableRowCell>
+                    }
+                    else
+                    {
+                <TableRowCell><i class="fas fa-image" style="text-align:center;" /></TableRowCell>
+                    }
+
+                <TableRowCell>@(item.IsNew == 1 ? "ใหม่" : "-")</TableRowCell>
+
+                <TableRowCell Style="font-weight:bold">@item.SaleHistory</TableRowCell>
+                <TableRowCell Style="font-weight:bold">@item.Stock</TableRowCell>
+                <TableRowCell Style="font-weight:bold">@item.StockMovement</TableRowCell>
+                <TableRowCell Style="font-weight:bold">@item.StockMovementPercentage</TableRowCell>
+
+                <TableRowCell Style="font-weight:bold">@item.Price</TableRowCell>
+                <TableRowCell>@item.PriceMovement</TableRowCell>
+
+                <TableRowCell>@item.RatingCount</TableRowCell>
+                <TableRowCell>@item.RatingValue</TableRowCell>
+
+                <TableRowCell>@item.LikedCount</TableRowCell>
+                <TableRowCell>@item.LikedMovement</TableRowCell>
+                @*<TableRowCell>@item.LikedPercentage</TableRowCell>*@
+
+            </TableRow>
+
+            }
+        </TableBody>
+    </Table>
+
+}
+
+@code {
+    private List<HqqvCproducts> cProducts = new List<HqqvCproducts>();
+    private int iRowNum = 1;
+    private bool iShowImage = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ShopeeDataExtraction sdeMgr = new ShopeeDataExtraction();
+        int limit = webReportSettings.LimitStockMovement;
+        cProducts = sdeMgr.GetTopProductInfo(ShopeeDataExtraction.TPOrder.StockMovement, limit);
+    }
+
+    private void ToggleImage()
+    {
+        iRowNum = 1;
+        iShowImage = !iShowImage;
+    }
+}

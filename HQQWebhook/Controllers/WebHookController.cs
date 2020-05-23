@@ -310,7 +310,6 @@ namespace HQQWebhook.Controllers
 
                 //# Validate existing sender Id from Database.
                 //# If not exist, call reciepient id from API
-
                 PrivateReply privateReply = dialogFlowMgr.GetPrivateReply(feedResp.Message);
 
                 try
@@ -548,8 +547,7 @@ namespace HQQWebhook.Controllers
             attachment.type = "template";
             payload.template_type = "generic";
 
-
-            foreach (var plProduct in dialogInfo.ResponseProducts)
+            foreach (var plProduct in dialogInfo.ResponseProducts.OrderBy(item => item.Order))
             {
                 var product = plProduct.Product;
                 var hqqDefaultPrice = product.HqqPrice.Where(pi => pi.Channel.Name == "Facebook").FirstOrDefault();

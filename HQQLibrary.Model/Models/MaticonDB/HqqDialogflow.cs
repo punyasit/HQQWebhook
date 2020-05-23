@@ -14,6 +14,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public string FlowType { get; set; }
         public string MatchKeywords { get; set; }
         public int? ProductId { get; set; }
+        public int? Ordering { get; set; }
         public string Payload { get; set; }
         public string PayloadImgUrl { get; set; }
         public string ResponseHeader { get; set; }

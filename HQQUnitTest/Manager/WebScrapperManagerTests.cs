@@ -50,11 +50,12 @@ namespace HQQLibrary.Manager.Tests
         }
 
         [TestMethod]
-        public void WS03_ExecuteGatherShopInfoTest()
+        public void WS03_GetTopProductInfo()
         {
             int limit = 10;
             var result = wsMgr.GetTopProductInfo(ShopeeDataExtraction.TPOrder.StockMovement, limit);
             Assert.IsTrue(result.Count == limit);
+        
         }
 
 

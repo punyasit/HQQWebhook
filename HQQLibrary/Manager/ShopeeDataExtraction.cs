@@ -46,6 +46,10 @@ namespace HQQLibrary.Manager
         }
         public void InitVariable()
         {
+            
+        }
+        private void InitLogger()
+        {
             IConfiguration appConfig = new ConfigurationBuilder()
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .Build();
@@ -82,6 +86,8 @@ namespace HQQLibrary.Manager
 
         public void ExecuteGatherShopInfo()
         {
+            this.InitLogger();
+
             string strProductData = string.Empty;
             string strPageData = string.Empty;
             List<HqqCompetitorShop> lstCompeteShop = new List<HqqCompetitorShop>();
@@ -110,7 +116,7 @@ namespace HQQLibrary.Manager
                 foreach (var cpShopItem in lstCompeteShop)
                 {
                     ///#DEBUG 
-                    // cpShopItem.RunPageNo = 1;
+                     cpShopItem.RunPageNo = 1;
                     for (int iPage = 0; iPage < cpShopItem.RunPageNo; iPage++)
                     {
                         try
@@ -431,7 +437,7 @@ namespace HQQLibrary.Manager
                 
                 try
                 {
-                    this.Context.SaveChanges();
+                   // this.Context.SaveChanges();
                 }
                 catch (Exception ex)
                 {
@@ -497,7 +503,8 @@ namespace HQQLibrary.Manager
                 }
                 else
                 {
-                    productStatistic.SaleMovementPercentage = (productStatistic.SaleMovement / existPrdStatistic.SaleHistory) * 100;
+                    productStatistic.SaleMovementPercentage = ((decimal)productStatistic.SaleMovement / (decimal)existPrdStatistic.SaleHistory) * 100;
+                    productStatistic.SaleMovementPercentage = Math.Round(productStatistic.SaleMovementPercentage.Value, 2, MidpointRounding.AwayFromZero);
 
                 }
 
@@ -509,7 +516,8 @@ namespace HQQLibrary.Manager
                 }
                 else
                 {
-                    productStatistic.PriceMovementPercentage = (productStatistic.PriceMovement / existPrdStatistic.PriceMovement) * 100;
+                    productStatistic.PriceMovementPercentage = ((decimal)productStatistic.PriceMovement / (decimal)existPrdStatistic.PriceMovement) * 100;
+                    productStatistic.PriceMovementPercentage = Math.Round(productStatistic.PriceMovementPercentage.Value, 2, MidpointRounding.AwayFromZero);
                 }
 
                 productStatistic.LikedMovement = (int)(productStatistic.LikedCount - existPrdStatistic.LikedCount);
@@ -519,7 +527,8 @@ namespace HQQLibrary.Manager
                 }
                 else
                 {
-                    productStatistic.LikedPercentage = (productStatistic.LikedMovement / existPrdStatistic.LikedCount) * 100;
+                    productStatistic.LikedPercentage = ((decimal)productStatistic.LikedMovement / (decimal)existPrdStatistic.LikedCount) * 100;
+                    productStatistic.LikedPercentage = Math.Round(productStatistic.LikedPercentage.Value, 2, MidpointRounding.AwayFromZero);
                 }
 
             }
@@ -538,30 +547,31 @@ namespace HQQLibrary.Manager
         }
 
         public enum TPOrder { StockMovement, SaleMovement};
-        public List<HqqvTopPurchaseProduct> GetTopProductInfo(TPOrder tpOrder, int limit)
+        public List<HqqvCproducts> GetTopProductInfo(TPOrder tpOrder, int limit)
         {
-            List<HqqvTopPurchaseProduct> result = new List<HqqvTopPurchaseProduct>();
+            List<HqqvCproducts> result = new List<HqqvCproducts>();
 
             switch (tpOrder)
             {
                 case TPOrder.StockMovement:
 
-                    result = Context.HqqvTopPurchaseProduct
+                    result = Context.HqqvCproducts
                         .OrderBy(item => item.StockMovement)
+                        .ThenByDescending(item => item.SaleHistory)
                         .Take(limit)
                         .ToList();
 
                     break;
                 case TPOrder.SaleMovement:
 
-                    result = Context.HqqvTopPurchaseProduct
-                        .OrderBy(item => item.SaleMovement)
+                    result = Context.HqqvCproducts
+                        .OrderByDescending(item => item.SaleMovement)
+                        .ThenByDescending(item => item.SaleHistory)
                         .Take(limit)
                         .ToList();
 
                     break;
             }
-
             
             return result;
         }

@@ -34,7 +34,7 @@ namespace HQQLibrary.Model.Models.MaticonDB
         public virtual DbSet<HqqProductManual> HqqProductManual { get; set; }
         public virtual DbSet<HqqProductReview> HqqProductReview { get; set; }
         public virtual DbSet<HqqSaleChannel> HqqSaleChannel { get; set; }
-        public virtual DbSet<HqqvTopPurchaseProduct> HqqvTopPurchaseProduct { get; set; }
+        public virtual DbSet<HqqvCproducts> HqqvCproducts { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
@@ -334,6 +334,11 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnType("varchar(500)")
                     .HasCharSet("utf8")
                     .HasCollation("utf8_general_ci");
+
+                entity.Property(e => e.Ordering)
+                    .HasColumnName("ordering")
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
 
                 entity.Property(e => e.Payload)
                     .HasColumnName("payload")
@@ -1078,11 +1083,11 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasCollation("utf8_general_ci");
             });
 
-            modelBuilder.Entity<HqqvTopPurchaseProduct>(entity =>
+            modelBuilder.Entity<HqqvCproducts>(entity =>
             {
                 entity.HasNoKey();
 
-                entity.ToView("hqqv_top_purchase_product");
+                entity.ToView("hqqv_cproducts");
 
                 entity.Property(e => e.Available)
                     .HasColumnName("available")
@@ -1122,6 +1127,12 @@ namespace HQQLibrary.Model.Models.MaticonDB
                     .HasColumnType("decimal(6,2)")
                     .HasDefaultValueSql("'0.00'");
 
+                entity.Property(e => e.Name)
+                    .HasColumnName("name")
+                    .HasColumnType("varchar(255)")
+                    .HasCharSet("utf8mb4")
+                    .HasCollation("utf8mb4_general_ci");
+
                 entity.Property(e => e.Price)
                     .HasColumnName("price")
                     .HasColumnType("decimal(10,2)")
@@ -1139,7 +1150,8 @@ namespace HQQLibrary.Model.Models.MaticonDB
 
                 entity.Property(e => e.ProductId)
                     .HasColumnName("product_id")
-                    .HasColumnType("bigint(20)");
+                    .HasColumnType("int(11)")
+                    .HasDefaultValueSql("'0'");
 
                 entity.Property(e => e.ProductRefId)
                     .HasColumnName("product_ref_id")

@@ -172,7 +172,8 @@ namespace HQQLibrary.Manager
                 var productResult = base.Context.HqqProduct
                     .Include(item => item.HqqDialogflowAddon)
                     .Where(item => item.Status == 1
-                     && respProducts.Contains(item.Id)).ToList();
+                     && respProducts.Contains(item.Id))
+                    .ToList();
 
                 if (productResult.Count() > 0)
                 {
@@ -198,11 +199,13 @@ namespace HQQLibrary.Manager
                     dialogFlowInfo.ResponseProducts = new List<PayloadProduct>();
                     foreach (var prItem in productResult)
                     {
-                        var payload = lstDialogFlow.Where(item => item.ProductId == prItem.Id).FirstOrDefault().Payload;
+                        var selectedDialogFlow = lstDialogFlow.Where(item => item.ProductId == prItem.Id).FirstOrDefault();
+
                         dialogFlowInfo.ResponseProducts.Add(new PayloadProduct()
                         {
                             Product = prItem,
-                            Payload = payload
+                            Order = selectedDialogFlow.Ordering,
+                            Payload = selectedDialogFlow.Payload
                         });
                     }
                     
@@ -279,6 +282,9 @@ namespace HQQLibrary.Manager
     public class PayloadProduct
     {
         public HqqProduct Product { get; set; }
+
+        public int? Order { get; set; }
+
         public string Payload { get; set; }
     }
 
