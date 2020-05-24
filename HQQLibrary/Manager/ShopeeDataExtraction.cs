@@ -16,6 +16,7 @@ using HQQLibrary.Utilities;
 using HtmlAgilityPack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using MySql.Data.MySqlClient;
 using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
@@ -46,7 +47,7 @@ namespace HQQLibrary.Manager
         }
         public void InitVariable()
         {
-            
+
         }
         private void InitLogger()
         {
@@ -108,7 +109,7 @@ namespace HQQLibrary.Manager
                .ToList();
 
             startTime = DateTime.Now;
-            Log.Information("Start Process Start Time: {0:dd:MM:yyyy HH:mm:ss}", startTime); 
+            Log.Information("Start Process Start Time: {0:dd:MM:yyyy HH:mm:ss}", startTime);
             Log.Information("Get Shop Information, {0}", lstCompeteShop.Count);
 
             using (var driver = new ChromeDriver(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), chromeOptions))
@@ -116,7 +117,7 @@ namespace HQQLibrary.Manager
                 foreach (var cpShopItem in lstCompeteShop)
                 {
                     ///#DEBUG 
-                     cpShopItem.RunPageNo = 1;
+                    // cpShopItem.RunPageNo = 1;
                     for (int iPage = 0; iPage < cpShopItem.RunPageNo; iPage++)
                     {
                         try
@@ -150,8 +151,8 @@ namespace HQQLibrary.Manager
                             Log.Information("Get Product Sale Amount Info");
                             foreach (var item in lstShopSelectResult)
                             {
-                                prdPageItem = GetProductPrimaryInfo(lstprdPageItem, 
-                                    ref strConvertPrice, 
+                                prdPageItem = GetProductPrimaryInfo(lstprdPageItem,
+                                    ref strConvertPrice,
                                     ref deConvertPrice, item);
                             }
 
@@ -183,7 +184,7 @@ namespace HQQLibrary.Manager
                             string strEx = ex.ToString();
 
                         }
-                       
+
                         Log.Information("Start extract product information, {0} records", lstprdPageItem.Count);
 
                         this.ExtractProductData(cpShopItem, strProductData, strPageData, lstprdPageItem);
@@ -434,16 +435,16 @@ namespace HQQLibrary.Manager
                 }
 
                 Log.Information("Save Product: {0}", productInfo.Name);
-                
+
                 try
                 {
-                   // this.Context.SaveChanges();
+                    this.Context.SaveChanges();
                 }
                 catch (Exception ex)
                 {
                     Log.Error("Found error on Save Product: {0}, Error: {1}", productInfo.Name, ex.Message);
                 }
-                
+
             }
         }
 
@@ -546,25 +547,28 @@ namespace HQQLibrary.Manager
             return productStatistic;
         }
 
-        public enum TPOrder { StockMovement, SaleMovement};
+        public enum TPOrder { StockMovement, SaleMovement };
         public List<HqqvCproducts> GetTopProductInfo(TPOrder tpOrder, int limit)
         {
             List<HqqvCproducts> result = new List<HqqvCproducts>();
 
+            DateTime maxDate = Context.HqqvCproducts.Max(item => item.CreatedOn);
+
             switch (tpOrder)
             {
                 case TPOrder.StockMovement:
-
                     result = Context.HqqvCproducts
+                        .Where(item => item.CreatedOn >= maxDate.AddDays(-1))
                         .OrderBy(item => item.StockMovement)
                         .ThenByDescending(item => item.SaleHistory)
                         .Take(limit)
                         .ToList();
 
                     break;
-                case TPOrder.SaleMovement:
 
+                case TPOrder.SaleMovement:
                     result = Context.HqqvCproducts
+                        .Where(item => item.CreatedOn >= DateTime.Now.AddDays(-1))
                         .OrderByDescending(item => item.SaleMovement)
                         .ThenByDescending(item => item.SaleHistory)
                         .Take(limit)
@@ -572,10 +576,40 @@ namespace HQQLibrary.Manager
 
                     break;
             }
-            
+
             return result;
         }
+
+        public List<CPChartData> GetTopProductChartData(int productAmount, int recordPerProduct)
+        {
+            List<CPChartData> result = new List<CPChartData>();
+            List<HqqCpProductStatistic> cpStatistic = new List<HqqCpProductStatistic>();
+            MySqlParameter paramMaxProducts = new MySqlParameter("max_products", productAmount);
+            MySqlParameter paramMaxRecords = new MySqlParameter("max_records", recordPerProduct);
+
+            var pStatistics = Context.HqqCpProductStatistic.FromSqlRaw(
+                "CALL hqqsp_cproduct_chart(@max_products,@max_records)"
+                , paramMaxProducts, paramMaxRecords).ToList();
+
+            var lstProductId = pStatistics.Select(item => item.ProductId).Distinct();
+            var lstProductInfo = Context.HqqCompetitorProduct.Where(item => lstProductId.Contains(item.Id)).ToList();
+
+            foreach (var item in lstProductInfo)
+            {
+                result.Add(
+                    new CPChartData()
+                    {
+                        CPProduct = item,
+                        CPProductStatistic = pStatistics.Where(pItem => pItem.ProductId == item.Id).ToList()
+                    });
+            }   
+
+            return result;
+        }
+
     }
+
+
 
 
 }

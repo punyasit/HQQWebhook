@@ -58,9 +58,16 @@ namespace HQQLibrary.Manager.Tests
         
         }
 
-
-
-
+        [TestMethod]
+        public void WS04_GetTopProductChartData()
+        {
+            int maxProduct = 5;
+            int maxRecords = 10;
+            var result = wsMgr.GetTopProductChartData(maxProduct, maxRecords);
+            Assert.IsTrue(result.CPProductStatistic.Count <= (maxProduct*maxRecords) 
+                && result.CPProductStatistic.Count > 0
+                && result.CPProduct.Count == maxProduct);
+        }
 
 
     }

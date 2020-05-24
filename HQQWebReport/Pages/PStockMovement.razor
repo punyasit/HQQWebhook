@@ -9,7 +9,7 @@
 @inject WebReportSettings webReportSettings
 
 <h1>สินค้าน่าสนใจเรียงตามลำดับจากยอดสั่งซื้อ </h1>
-<p>เรียงตามความน่าสนใจจาก Stock Percentage (%)</p>
+<p>เรียงตามความน่าสนใจจาก Stock Percentage (%) : @strDateInformation</p>
 
 @if (cProducts == null || cProducts.Count == 0)
 {
@@ -93,12 +93,19 @@ else
     private List<HqqvCproducts> cProducts = new List<HqqvCproducts>();
     private int iRowNum = 1;
     private bool iShowImage = false;
+    private string strDateInformation = "{0} - {1}";
+    private System.Globalization.CultureInfo cultureInfo = new System.Globalization.CultureInfo("th-TH");
 
     protected override async Task OnInitializedAsync()
     {
         ShopeeDataExtraction sdeMgr = new ShopeeDataExtraction();
         int limit = webReportSettings.LimitStockMovement;
         cProducts = sdeMgr.GetTopProductInfo(ShopeeDataExtraction.TPOrder.StockMovement, limit);
+
+        var maxDate = cProducts.Max(item => item.CreatedOn);
+        strDateInformation = string.Format(strDateInformation, 
+            maxDate.AddDays(-1).ToString("dd-MMM-yyyy", cultureInfo), 
+            maxDate.ToString("dd-MMM-yyyy", cultureInfo));
     }
 
     private void ToggleImage()
