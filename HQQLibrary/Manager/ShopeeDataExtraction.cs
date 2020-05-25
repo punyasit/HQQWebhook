@@ -117,7 +117,7 @@ namespace HQQLibrary.Manager
                 foreach (var cpShopItem in lstCompeteShop)
                 {
                     ///#DEBUG 
-                    // cpShopItem.RunPageNo = 1;
+                    cpShopItem.RunPageNo = 1;
                     for (int iPage = 0; iPage < cpShopItem.RunPageNo; iPage++)
                     {
                         try
@@ -153,7 +153,8 @@ namespace HQQLibrary.Manager
                             {
                                 prdPageItem = GetProductPrimaryInfo(lstprdPageItem,
                                     ref strConvertPrice,
-                                    ref deConvertPrice, item);
+                                    ref deConvertPrice,
+                                    item);
                             }
 
                             //File.WriteAllText(HQQUtilities.AssemblyDirectory + "/dummy-product_item.txt", JsonConvert.SerializeObject(lstprdPageItem));
@@ -186,7 +187,6 @@ namespace HQQLibrary.Manager
                         }
 
                         Log.Information("Start extract product information, {0} records", lstprdPageItem.Count);
-
                         this.ExtractProductData(cpShopItem, strProductData, strPageData, lstprdPageItem);
 
                         Log.Information("Completed extract product information, {0} records", lstprdPageItem.Count);
@@ -200,67 +200,72 @@ namespace HQQLibrary.Manager
 
         }
 
-        private static ProductPageItem GetProductPrimaryInfo(List<ProductPageItem> lstprdPageItem, ref string strConvertPrice, ref int deConvertPrice, IWebElement item)
+        private static ProductPageItem GetProductPrimaryInfo(
+            List<ProductPageItem> lstprdPageItem,
+            ref string strConvertSold,
+            ref int deConvertSold,
+            IWebElement item)
         {
             ProductPageItem prdPageItem = new ProductPageItem();
             prdPageItem.URL = item.FindElement(By.TagName("a")).GetAttribute("href");
             prdPageItem.ProductId = (long.Parse(prdPageItem.URL.Split(new char[] { '.' }, StringSplitOptions.RemoveEmptyEntries).Last()));
 
             //#FIND AMOUNT IF AMOUNT < 1000 THEN COlLECT TO STATISTIC
-            var tmpPrice = item.FindElement(By.XPath("div/a/div/div[2]/div[3]/div[3]"));
-            if (tmpPrice != null)
+            var tmpSoldElmnt = item.FindElement(By.XPath("div/a/div/div[2]/div[3]/div[3]"));
+            if (tmpSoldElmnt != null)
             {
-                if (string.IsNullOrEmpty(tmpPrice.Text))
+                if (string.IsNullOrEmpty(tmpSoldElmnt.Text))
                 {
-                    strConvertPrice = tmpPrice.GetAttribute("innerHTML");
+                    strConvertSold = tmpSoldElmnt.GetAttribute("innerHTML");
                 }
                 else
                 {
-                    strConvertPrice = tmpPrice.Text;
+                    strConvertSold = tmpSoldElmnt.Text;
                 }
 
-                strConvertPrice = strConvertPrice.Replace("ขายแล้ว ", "").Replace(" ชิ้น", "");
-                if (!string.IsNullOrEmpty(strConvertPrice))
+                strConvertSold = strConvertSold.Replace("ขายแล้ว ", "").Replace(" ชิ้น", "");
+                if (!string.IsNullOrEmpty(strConvertSold))
                 {
-                    if (strConvertPrice.Contains("พัน"))
+                    if (strConvertSold.Contains("พัน"))
                     {
-                        strConvertPrice = strConvertPrice.Replace("พัน", "");
-                        var converted = Convert.ToDecimal(strConvertPrice);
-                        deConvertPrice = (int)(converted * 1000);
+                        strConvertSold = strConvertSold.Replace("พัน", "");
+                        var converted = Convert.ToDecimal(strConvertSold);
+                        deConvertSold = (int)(converted * 1000);
                     }
-                    else if (strConvertPrice.Contains("หมื่น"))
+                    else if (strConvertSold.Contains("หมื่น"))
                     {
-                        strConvertPrice = strConvertPrice.Replace("หมื่น", "");
-                        var converted = Convert.ToDecimal(strConvertPrice);
-                        deConvertPrice = (int)(deConvertPrice * 10000);
+                        strConvertSold = strConvertSold.Replace("หมื่น", "");
+                        var converted = Convert.ToDecimal(strConvertSold);
+                        deConvertSold = (int)(deConvertSold * 10000);
                     }
                     else
                     {
-                        deConvertPrice = Convert.ToInt32(strConvertPrice);
+                        deConvertSold = Convert.ToInt32(strConvertSold);
                     }
                 }
                 else
                 {
-                    deConvertPrice = 0;
+                    deConvertSold = 0;
                 }
             }
             else
             {
-                deConvertPrice = 0;
+                deConvertSold = 0;
                 Log.Error("Cannot Convert Sold Amount from product Id: {0}", prdPageItem.ProductId);
             }
 
-            if (deConvertPrice < 1000)
+            if (deConvertSold < 1000)
             {
-                prdPageItem.Sold = deConvertPrice;
+                prdPageItem.Sold = deConvertSold;
                 lstprdPageItem.Add(prdPageItem);
             }
 
             return prdPageItem;
         }
 
-        private void NavigateQueryProductInfo(ref string strConvertPrice,
-            ref int deConvertPrice,
+        private void NavigateQueryProductInfo(
+            ref string strConvertLiked,
+            ref int deConvertLiked,
             ChromeDriver driver,
             out WebDriverWait wait,
             out IWebElement result,
@@ -299,31 +304,31 @@ namespace HQQLibrary.Manager
             var liked = prdBriefing.FindElement(By.XPath("div[2]/div[2]/div[2]/div"));
             if (liked != null)
             {
-                strConvertPrice = liked.GetAttribute("textContent");
-                rxMatch = rxExtract.Match(strConvertPrice);
+                strConvertLiked = liked.GetAttribute("textContent");
+                rxMatch = rxExtract.Match(strConvertLiked);
                 if (rxMatch.Success)
                 {
-                    strConvertPrice = rxMatch.Value.Replace("(", "").Replace(")", "");
+                    strConvertLiked = rxMatch.Value.Replace("(", "").Replace(")", "");
                 }
 
-                if (strConvertPrice.Contains("พัน"))
+                if (strConvertLiked.Contains("พัน"))
                 {
-                    strConvertPrice = strConvertPrice.Replace("พัน", "");
-                    var converted = Convert.ToDecimal(strConvertPrice);
-                    deConvertPrice = (int)(converted * 1000);
+                    strConvertLiked = strConvertLiked.Replace("พัน", "");
+                    var converted = Convert.ToDecimal(strConvertLiked);
+                    deConvertLiked = (int)(converted * 1000);
                 }
-                else if (strConvertPrice.Contains("หมื่น"))
+                else if (strConvertLiked.Contains("หมื่น"))
                 {
-                    strConvertPrice = strConvertPrice.Replace("หมื่น", "");
-                    var converted = Convert.ToDecimal(strConvertPrice);
-                    deConvertPrice = (int)(deConvertPrice * 10000);
+                    strConvertLiked = strConvertLiked.Replace("หมื่น", "");
+                    var converted = Convert.ToDecimal(strConvertLiked);
+                    deConvertLiked = (int)(deConvertLiked * 10000);
                 }
                 else
                 {
-                    deConvertPrice = Convert.ToInt32(strConvertPrice);
+                    deConvertLiked = Convert.ToInt32(strConvertLiked);
                 }
 
-                item.Liked = (int)deConvertPrice;
+                item.Liked = (int)deConvertLiked;
             }
         }
 
@@ -427,17 +432,19 @@ namespace HQQLibrary.Manager
                     }
                     else
                     {
-                        productStatistic.ProductId = cProductInfo.Id;
                         this.Context.HqqCompetitorShop.Attach(hqqCShop);
                         this.Context.HqqCompetitorProduct.Attach(cProductInfo);
+                        productStatistic.ProductId = cProductInfo.Id;
                         this.Context.HqqCpProductStatistic.Add(productStatistic);
                     }
+
                 }
 
                 Log.Information("Save Product: {0}", productInfo.Name);
 
                 try
                 {
+                    ///#DEBUG 
                     this.Context.SaveChanges();
                 }
                 catch (Exception ex)
@@ -510,14 +517,14 @@ namespace HQQLibrary.Manager
                 }
 
                 productStatistic.PriceMovement = 0;
-                productStatistic.PriceMovement = productStatistic.PriceMovement - existPrdStatistic.PriceMovement;
+                productStatistic.PriceMovement = productStatistic.Price - existPrdStatistic.Price;
                 if (productStatistic.PriceMovement == 0)
                 {
                     productStatistic.PriceMovementPercentage = 0;
                 }
                 else
                 {
-                    productStatistic.PriceMovementPercentage = ((decimal)productStatistic.PriceMovement / (decimal)existPrdStatistic.PriceMovement) * 100;
+                    productStatistic.PriceMovementPercentage = ((decimal)productStatistic.PriceMovement / (decimal)existPrdStatistic.Price) * 100;
                     productStatistic.PriceMovementPercentage = Math.Round(productStatistic.PriceMovementPercentage.Value, 2, MidpointRounding.AwayFromZero);
                 }
 
@@ -602,7 +609,7 @@ namespace HQQLibrary.Manager
                         CPProduct = item,
                         CPProductStatistic = pStatistics.Where(pItem => pItem.ProductId == item.Id).ToList()
                     });
-            }   
+            }
 
             return result;
         }

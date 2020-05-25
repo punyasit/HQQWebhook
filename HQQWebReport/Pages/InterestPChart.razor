@@ -16,6 +16,8 @@
     LineChart<double> lineChart;
     List<string> Labels = new List<string>();
     List<CPChartData> lstChartData = new List<CPChartData>();
+    List<ChartColor> lstChartColor = new List<ChartColor>();
+    List<LineChartDataset<double>> lstLineChartDS = new List<LineChartDataset<double>>();
 
     int productStep = 5;
     int chartStep = 10;
@@ -24,30 +26,42 @@
     {
         if (firstRender)
         {
-            this.InitialData();
+            this.InitChartColor();
+            this.InitChartData();
             this.GenerateLabel(1, chartStep, 1);
             await HandleRedraw();
         }
     }
 
-    private void InitialData()
+    private void InitChartColor()
+    {
+        lstChartColor.Add(ChartColor.FromRgba(240, 101, 62, 1f));
+        lstChartColor.Add(ChartColor.FromRgba(127, 199, 145, 1f));
+        lstChartColor.Add(ChartColor.FromRgba(255, 142, 85, 1f));
+        lstChartColor.Add(ChartColor.FromRgba(121, 173, 94, 1f));
+        lstChartColor.Add(ChartColor.FromRgba(38, 59, 112, 1f));
+    }
+
+    private void InitChartData()
     {
         ShopeeDataExtraction sdeMgr = new ShopeeDataExtraction();
         lstChartData = sdeMgr.GetTopProductChartData(productStep, chartStep);
+        int iRow = 0;
         foreach (var item in lstChartData)
         {
-            lineChart.AddDataSet(
+            lstLineChartDS.Add(
                 new LineChartDataset<double>
                 {
                     Label = item.CPProduct.ProductName,
-                    Data = item.CPProductStatistic.Select(pItem => (double)pItem.SaleHistory).ToList(),
-                    BackgroundColor = new List<string> { ChartColor.FromRgba(65, 175, 25, 1f) },
-                    BorderColor = new List<string> { ChartColor.FromRgba(65, 175, 25, 1f) },
+                    Data = item.CPProductStatistic.OrderBy(pItem => pItem.CreatedOn).Select(pItem => (double)pItem.SaleMovement).ToList(),
+                    BackgroundColor = new List<string> { lstChartColor[iRow] },
+                    BorderColor = new List<string> { lstChartColor[iRow] },
                     Fill = false,
                     PointRadius = 1,
                     BorderDash = new List<int> { }
 
-                }); ;
+                });
+            iRow++;
         }
     }
 
@@ -55,8 +69,7 @@
     {
         await lineChart.Clear();
         await lineChart.AddLabel(Labels.ToArray());
-        //await lineChart.AddDataSet(GetLineChartDataset());
-
+        await lineChart.AddDataSet(lstLineChartDS.ToArray());
         await lineChart.Update();
     }
 
