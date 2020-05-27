@@ -8,6 +8,8 @@
 
 @inject WebReportSettings webReportSettings
 
+
+
 <h1>สินค้าน่าสนใจเรียงตามลำดับจากยอดสั่งซื้อ </h1>
 <p>เรียงตามความน่าสนใจจาก Stock Percentage (%) : @strDateInformation</p>
 
@@ -49,39 +51,41 @@ else
         <TableBody>
             @foreach (var item in cProducts)
             {
-            <TableRow>
-                <TableRowCell>@(iRowNum++)</TableRowCell>
-                <TableRowCell>@item.ShopName</TableRowCell>
-                @*<TableRowCell>@item.ProductRefId</TableRowCell>*@
-                <TableRowCell><Tooltip Text="@(item.Name)">@(item.Name.Length > 15 ? item.Name.Substring(0, 15) : item.Name)</Tooltip></TableRowCell>
+                <TableRow>
+                    <TableRowCell>@(iRowNum++)</TableRowCell>
+                    <TableRowCell>@item.ShopName</TableRowCell>
+                    @*<TableRowCell>@item.ProductRefId</TableRowCell>*@
+                    <TableRowCell>
+                        <Tooltip Text="@(item.Name)">@(item.Name.Length > 15 ? item.Name.Substring(0, 15) : item.Name)</Tooltip>
+                    </TableRowCell>
 
-                @if (iShowImage)
+                    @if (iShowImage)
                     {
-                <TableRowCell><img class="img-preview" style="text-align:center;" src="@item.ImageUrl" /></TableRowCell>
+                        <TableRowCell><img class="img-preview" style="text-align:center;" src="@item.ImageUrl" /></TableRowCell>
                     }
                     else
                     {
-                <TableRowCell><i class="fas fa-image" style="text-align:center;" /></TableRowCell>
+                        <TableRowCell><i class="fas fa-image" style="text-align:center;" /></TableRowCell>
                     }
 
-                <TableRowCell>@(item.IsNew == 1 ? "ใหม่" : "-")</TableRowCell>
+                    <TableRowCell>@(item.IsNew == 1 ? "ใหม่" : "-")</TableRowCell>
 
-                <TableRowCell Style="font-weight:bold">@item.SaleHistory</TableRowCell>
-                <TableRowCell Style="font-weight:bold">@item.Stock</TableRowCell>
-                <TableRowCell Style="font-weight:bold">@item.StockMovement</TableRowCell>
-                <TableRowCell Style="font-weight:bold">@item.StockMovementPercentage</TableRowCell>
+                    <TableRowCell Style="font-weight:bold">@item.SaleHistory</TableRowCell>
+                    <TableRowCell Style="font-weight:bold">@item.Stock</TableRowCell>
+                    <TableRowCell Style="font-weight:bold">@item.StockMovement</TableRowCell>
+                    <TableRowCell Style="font-weight:bold">@item.StockMovementPercentage</TableRowCell>
 
-                <TableRowCell Style="font-weight:bold">@item.Price</TableRowCell>
-                <TableRowCell>@item.PriceMovement</TableRowCell>
+                    <TableRowCell Style="font-weight:bold">@item.Price</TableRowCell>
+                    <TableRowCell>@item.PriceMovement</TableRowCell>
 
-                <TableRowCell>@item.RatingCount</TableRowCell>
-                <TableRowCell>@item.RatingValue</TableRowCell>
+                    <TableRowCell>@item.RatingCount</TableRowCell>
+                    <TableRowCell>@item.RatingValue</TableRowCell>
 
-                <TableRowCell>@item.LikedCount</TableRowCell>
-                <TableRowCell>@item.LikedMovement</TableRowCell>
-                @*<TableRowCell>@item.LikedPercentage</TableRowCell>*@
+                    <TableRowCell>@item.LikedCount</TableRowCell>
+                    <TableRowCell>@item.LikedMovement</TableRowCell>
+                    @*<TableRowCell>@item.LikedPercentage</TableRowCell>*@
 
-            </TableRow>
+                </TableRow>
 
             }
         </TableBody>
@@ -103,8 +107,8 @@ else
         cProducts = sdeMgr.GetTopProductInfo(ShopeeDataExtraction.TPOrder.StockMovement, limit);
 
         var maxDate = cProducts.Max(item => item.CreatedOn);
-        strDateInformation = string.Format(strDateInformation, 
-            maxDate.AddDays(-1).ToString("dd-MMM-yyyy", cultureInfo), 
+        strDateInformation = string.Format(strDateInformation,
+            maxDate.AddDays(-1).ToString("dd-MMM-yyyy", cultureInfo),
             maxDate.ToString("dd-MMM-yyyy", cultureInfo));
     }
 

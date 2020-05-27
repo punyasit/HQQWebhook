@@ -117,7 +117,7 @@ namespace HQQLibrary.Manager
                 foreach (var cpShopItem in lstCompeteShop)
                 {
                     ///#DEBUG 
-                    cpShopItem.RunPageNo = 1;
+                    //cpShopItem.RunPageNo = 1;
                     for (int iPage = 0; iPage < cpShopItem.RunPageNo; iPage++)
                     {
                         try
@@ -351,15 +351,10 @@ namespace HQQLibrary.Manager
             lstExistingCompetPrd = Context.HqqCompetitorProduct
                 .Where(item => item.ShopId == hqqCShop.Id && item.Status == 1).ToList();
 
-            var lstPrdStId = Context.HqqCpProductStatistic
-                .Where(item => item.Product.ShopId == hqqCShop.Id)
-                .GroupBy(x => x.ProductId, (x, y) => new
-                {
-                    Id = x,
-                    CreatedDate = y.Max(z => z.CreatedOn)
-                })
-                .Select(gp => gp.Id)
-                .ToList();
+            var lstPrdStId = Context.HqqvCproducts
+                    .Where(item => item.ShopId == hqqCShop.ShopId)
+                    .Select(item => item.ProductId)
+                    .ToList();
 
             lstExistingPrdStatistic = Context.HqqCpProductStatistic
                 .Where(item => lstPrdStId.Contains(item.Id))
