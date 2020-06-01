@@ -60,6 +60,8 @@ namespace HQQWebhook.Controllers
             dialogFlowMgr = new DialogflowManager();
             endflowPayload = dialogFlowMgr.GetDirectPayload(strEndflowPayload);
 
+            AppContext.SetSwitch("System.Net.Http.UseSocketsHttpHandler", false);
+
         }
 
         /*
@@ -217,11 +219,17 @@ namespace HQQWebhook.Controllers
 
                 //# PROCCSS QUICK REPLY / LOAD DATA AND REPLY BACK 
                 DialogflowInfo dialogAnswer = dialogFlowMgr.GetDialogFromPayload(quickReplyPayload);
+                
+                if (dialogAnswer != null &&
+                    dialogAnswer.ResponseHeader != null
+                    && dialogAnswer.ResponseHeader.Count > 0)
+                {
+                    respHeader = RandomAnswer(dialogAnswer.ResponseHeader);
+                }
 
                 if (dialogAnswer.ResponseProducts != null
                     && dialogAnswer.ResponseProducts.Count() > 0)
                 {
-                    respHeader = RandomAnswer(dialogAnswer.ResponseHeader);
                     sendTypingOn(senderID);
                     SendTextMessage(senderID, respHeader);
                     sendTypingOff(senderID);

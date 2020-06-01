@@ -357,7 +357,7 @@ namespace HQQLibrary.Manager
                     .ToList();
 
             lstExistingPrdStatistic = Context.HqqCpProductStatistic
-                .Where(item => lstPrdStId.Contains(item.Id))
+                .Where(item => lstPrdStId.Contains(item.ProductId))
                 .ToList();
 
             //# Pre-JSON data for Update

@@ -7,6 +7,7 @@ using System.Linq;
 using NETHTTP = System.Net.Http;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
+using Flurl.Http;
 
 namespace HQQWebhook.Manager
 {
@@ -32,9 +33,16 @@ namespace HQQWebhook.Manager
         public string GetSPID(string userId)
         {
             string result = string.Empty;
-            NETHTTP.HttpResponseMessage response = (new NETHTTP.HttpClient().GetAsync(
-                fbConfig.FacebookApi + string.Format(API_GET_PSID_PATTERN, userId, fbConfig.PageId, fbConfig.AppId, fbConfig.AppSecret)
-                ).Result);
+            //NETHTTP.HttpResponseMessage response = (new NETHTTP.HttpClient().GetAsync(
+            //    fbConfig.FacebookApi + string.Format(API_GET_PSID_PATTERN, userId, fbConfig.PageId, fbConfig.AppId, fbConfig.AppSecret)
+            //    ).Result);
+
+            var response = (fbConfig.FacebookApi
+                 + string.Format(API_GET_PSID_PATTERN,
+                 userId, fbConfig.PageId,
+                 fbConfig.AppId, fbConfig.AppSecret))
+                 .GetAsync()
+                 .Result;
 
             if (response != null)
             {
@@ -82,31 +90,52 @@ namespace HQQWebhook.Manager
             });
             var objMsgData = JsonConvert.DeserializeObject(strJsonObject);
 
-            NETHTTP.HttpResponseMessage response = new NETHTTP.HttpClient().PostAsJsonAsync(
-                fbConfig.FacebookApi + API_SEND_MESSAGE + "?access_token=" + fbConfig.PageAccessToken
-                , (object)objMsgData).Result;
-
-            if (response != null)
+            //NETHTTP.HttpResponseMessage response = new NETHTTP.HttpClient().PostAsJsonAsync(
+            //    fbConfig.FacebookApi + API_SEND_MESSAGE + "?access_token=" + fbConfig.PageAccessToken
+            //    , (object)objMsgData).Result;
+            try
             {
-                if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                var response = (fbConfig.FacebookApi + API_SEND_MESSAGE + "?access_token=" + fbConfig.PageAccessToken)
+               .PostJsonAsync((object)objMsgData).Result;
+
+                if (response != null)
                 {
-                    // #LOG : Error log
-                    logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
-                       string.Format(" CallSendAPI, Ex: {0}, Source: {1}"
-                       , response.ToString()
-                       , JsonConvert.SerializeObject((object)messageData))
-                       );
+                    if (response.StatusCode != System.Net.HttpStatusCode.OK)
+                    {
+                        // #LOG : Error log
+                        logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
+                           string.Format(" CallSendAPI, Ex: {0}, Source: {1}"
+                           , response.ToString()
+                           , JsonConvert.SerializeObject((object)messageData))
+                           );
+                    }
                 }
             }
+            catch (Exception ex)
+            {
+                // #LOG : Error log
+                logger.LogError(ConstInfo.LOG_TRACE_PREFIX +
+                   string.Format(" CallSendAPI, Ex: {0}, Source: {1}"
+                   , ex.Message.ToString()
+                   , JsonConvert.SerializeObject((object)messageData))
+                   );
+            }
+           
         }
 
         public void ReplyComment(string commentId, dynamic messageData)
         {
-            NETHTTP.HttpResponseMessage response = new NETHTTP.HttpClient().PostAsJsonAsync(
-                fbConfig.FacebookApi +
+            //NETHTTP.HttpResponseMessage response = new NETHTTP.HttpClient().PostAsJsonAsync(
+            //    fbConfig.FacebookApi +
+            //    string.Format(API_POST_REPLY_COMMENT, commentId)
+            //    + "?access_token=" + fbConfig.PageAccessToken
+            //    , (object)messageData).Result;
+
+           var response = (fbConfig.FacebookApi +
                 string.Format(API_POST_REPLY_COMMENT, commentId)
-                + "?access_token=" + fbConfig.PageAccessToken
-                , (object)messageData).Result;
+                + "?access_token=" + fbConfig.PageAccessToken)
+                .PostJsonAsync((object)messageData)
+                .Result;
 
             if (response != null)
             {
