@@ -341,7 +341,7 @@ namespace HQQLibrary.Manager
             List<ProductDataItem> lstProductDataItem;
             List<ProductDisplayItem> lstProductDisplayItem = new List<ProductDisplayItem>();
             List<HqqCompetitorProduct> lstExistingCompetPrd = new List<HqqCompetitorProduct>();
-            List<HqqCpProductStatistic> lstExistingPrdStatistic = new List<HqqCpProductStatistic>();
+            List<HqqvCproducts> lstExistingPrdStatistic = new List<HqqvCproducts>();
             List<HqqCompetitorProduct> lstNewCompetProduct = new List<HqqCompetitorProduct>();
             HqqCpProductStatistic productStatistic = new HqqCpProductStatistic();
 
@@ -351,13 +351,8 @@ namespace HQQLibrary.Manager
             lstExistingCompetPrd = Context.HqqCompetitorProduct
                 .Where(item => item.ShopId == hqqCShop.Id && item.Status == 1).ToList();
 
-            var lstPrdStId = Context.HqqvCproducts
-                    .Where(item => item.ShopId == hqqCShop.ShopId)
-                    .Select(item => item.ProductId)
-                    .ToList();
-
-            lstExistingPrdStatistic = Context.HqqCpProductStatistic
-                .Where(item => lstPrdStId.Contains(item.ProductId))
+            lstExistingPrdStatistic = Context.HqqvCproducts
+                .Where(item => item.ShopId == hqqCShop.ShopId)
                 .ToList();
 
             //# Pre-JSON data for Update
@@ -453,7 +448,7 @@ namespace HQQLibrary.Manager
         private static HqqCpProductStatistic ExtractStatistic(
             ProductDisplayItem productInfo,
             ProductPageItem prdPageItem,
-            HqqCpProductStatistic existPrdStatistic)
+            HqqvCproducts existPrdStatistic)
         {
             HqqCpProductStatistic productStatistic = new HqqCpProductStatistic();
             productStatistic.Available = 0;
