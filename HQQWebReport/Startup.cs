@@ -14,6 +14,7 @@ using Blazorise;
 using Blazorise.Bootstrap;
 using Blazorise.Icons.FontAwesome;
 using System.Net.Http;
+using Toolbelt.Blazor.Extensions.DependencyInjection;
 
 namespace HQQWebReport
 {
@@ -42,6 +43,8 @@ namespace HQQWebReport
               })
                 .AddBootstrapProviders()
                 .AddFontAwesomeIcons();
+
+            services.AddHeadElementHelper();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

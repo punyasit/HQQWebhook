@@ -19,7 +19,7 @@
     List<ChartColor> lstChartColor = new List<ChartColor>();
     List<LineChartDataset<double>> lstLineChartDS = new List<LineChartDataset<double>>();
 
-    int productStep = 5;
+    int productStep = 10;
     int chartStep = 10;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -35,11 +35,19 @@
 
     private void InitChartColor()
     {
-        lstChartColor.Add(ChartColor.FromRgba(240, 101, 62, 1f));
-        lstChartColor.Add(ChartColor.FromRgba(127, 199, 145, 1f));
-        lstChartColor.Add(ChartColor.FromRgba(255, 142, 85, 1f));
-        lstChartColor.Add(ChartColor.FromRgba(121, 173, 94, 1f));
-        lstChartColor.Add(ChartColor.FromRgba(38, 59, 112, 1f));
+
+        //lstChartColor.Add(ChartColor.FromRgba(240, 101, 62, 1f));
+        //lstChartColor.Add(ChartColor.FromRgba(127, 199, 145, 1f));
+        //lstChartColor.Add(ChartColor.FromRgba(255, 142, 85, 1f));
+        //lstChartColor.Add(ChartColor.FromRgba(121, 173, 94, 1f));
+        //lstChartColor.Add(ChartColor.FromRgba(38, 59, 112, 1f));
+
+
+        Random r = new Random();
+        for (int i = 0; i < productStep; i++)
+        {
+            lstChartColor.Add(ChartColor.FromRgba((byte)r.Next(100, 256), (byte)r.Next(100, 256), (byte)r.Next(100, 256), 1f));
+        }
     }
 
     private void InitChartData()
@@ -103,7 +111,13 @@
 
 
     List<string> backgroundColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f) };
-    List<string> borderColors = new List<string> { ChartColor.FromRgba(255, 99, 132, 1f), ChartColor.FromRgba(54, 162, 235, 1f), ChartColor.FromRgba(255, 206, 86, 1f), ChartColor.FromRgba(75, 192, 192, 1f), ChartColor.FromRgba(153, 102, 255, 1f), ChartColor.FromRgba(255, 159, 64, 1f) };
+    List<string> borderColors = new List<string> {
+        ChartColor.FromRgba(255, 99, 132, 1f),
+        ChartColor.FromRgba(54, 162, 235, 1f),
+        ChartColor.FromRgba(255, 206, 86, 1f),
+        ChartColor.FromRgba(75, 192, 192, 1f),
+        ChartColor.FromRgba(153, 102, 255, 1f),
+        ChartColor.FromRgba(255, 159, 64, 1f) };
 
     List<double> RandomizeData()
     {

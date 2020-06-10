@@ -5,7 +5,7 @@
 @using HQQLibrary.Model
 @using HQQLibrary.Model.Models.MaticonDB;
 @using HQQWebReport.Data
-@using System.Web 
+@using System.Web
 
 @inject WebReportSettings webReportSettings
 
@@ -20,6 +20,9 @@
 }
 else
 {
+    <Toolbelt.Blazor.HeadElement.Title>
+        @(strTitle)
+    </Toolbelt.Blazor.HeadElement.Title>
     //https://blazorise.com/docs/components/table/
     <Table class="table products" Hoverable="true" Narrow="true">
         <TableHeader ThemeContrast="ThemeContrast.Dark">
@@ -58,7 +61,7 @@ else
                     @*<TableRowCell>@item.ProductRefId</TableRowCell>*@
                     <TableRowCell>
                         <a href="@GenerateURL(item)" target="_blank">
-                        <Tooltip Text="@(item.Name)">@(item.Name.Length > 15 ? item.Name.Substring(0, 15) : item.Name)</Tooltip>
+                            <Tooltip Text="@(item.Name)">@(item.Name.Length > 15 ? item.Name.Substring(0, 15) : item.Name)</Tooltip>
                         </a>
                     </TableRowCell>
 
@@ -103,6 +106,7 @@ else
     private string strDateInformation = "{0} - {1}";
     private System.Globalization.CultureInfo cultureInfo = new System.Globalization.CultureInfo("th-TH");
     private string redirectURL = "shopee.co.th/{0}-i.{1}.{2}"; //{productname}{1}{2}
+    private string strTitle = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -114,6 +118,8 @@ else
         strDateInformation = string.Format(strDateInformation,
             maxDate.AddDays(-1).ToString("dd-MMM-yyyy", cultureInfo),
             maxDate.ToString("dd-MMM-yyyy", cultureInfo));
+
+        strTitle = string.Format("C.Report - {0}", strDateInformation);
     }
 
     private void ToggleImage()
@@ -124,8 +130,8 @@ else
 
     private string GenerateURL(HqqvCproducts item)
     {
-        return "https://"+string.Format(redirectURL
-            , item.Name.Replace(" ", "-").Replace("%","")
+        return "https://" + string.Format(redirectURL
+            , item.Name.Replace(" ", "-").Replace("%", "")
             , item.ShopId, item.ProductRefId);
         //https://shopee.co.th/Smart watch D28 รุ่นใหม่ล่าสุด พร้อมประกันสินค้า 1 เดือนเต็ม มีชำระปลายทาง !!!-i.3315055.20
     }
